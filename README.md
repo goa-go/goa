@@ -3,8 +3,7 @@
 [![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/goa-go/goa/pull/new)
 Goa is under construction, if you are familiar with [koa](https://github.com/koajs/koa) or go and interested in this project, please join us.
 
-Goa is a using middleware web framework for golang.
-
+## What is goa?
 goa = go + [koa](https://github.com/koajs/koa)
 
 ## Installation
@@ -32,12 +31,12 @@ func main() {
 Goa is a middleware framework.Here is an example.
 ```go
 import (
-	"fmt"
-	"net/http"
-	"time"
+  "fmt"
+  "net/http"
+  "time"
 
-	"github.com/goa-go/goa"
-	"github.com/julienschmidt/httprouter"
+  "github.com/goa-go/goa"
+  "github.com/julienschmidt/httprouter"
 )
 
 func logger(w http.ResponseWriter, r *http.Request, next func()) {
