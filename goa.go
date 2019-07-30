@@ -1,3 +1,4 @@
+// goa
 package goa
 
 import (

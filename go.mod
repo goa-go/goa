@@ -1,4 +1,4 @@
-module goa
+module github.com/goa-go/goa
 
 go 1.12
 

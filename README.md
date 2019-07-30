@@ -28,7 +28,7 @@ func main() {
 
 ## Middleware
 
-Goa is a middleware framework.Here is an example.
+Goa is a web framework based on middleware. Here is an example.
 ```go
 import (
   "fmt"
