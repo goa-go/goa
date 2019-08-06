@@ -5,18 +5,23 @@ import (
 	"net/http"
 )
 
-type Middleware func(http.ResponseWriter, *http.Request, func())
+const Version = "1.0.0"
+
+type Middleware func(*Context, func())
 type Middlewares []Middleware
 
-type HandleRequest func(http.ResponseWriter, *http.Request)
+type HandleRequest func(*Context)
 
 type Goa struct {
-	middlewares   Middlewares
+	middlewares Middlewares
+
+	Context       *Context
 	handleRequest HandleRequest
 }
 
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	app.handleRequest(w, r)
+	app.Context = createContext(w, r)
+	app.handleRequest(app.Context)
 }
 
 func (app *Goa) Use(m Middleware) {
@@ -29,14 +34,14 @@ func (app *Goa) Listen(addr string) {
 }
 
 func compose(m Middlewares) HandleRequest {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var dispatch func(i int)
+	return func(c *Context) {
+		var dispatch func(int)
 		dispatch = func(i int) {
 			if i == len(m) {
 				return
 			}
 			fn := m[i]
-			fn(w, r, func() {
+			fn(c, func() {
 				dispatch(i + 1)
 			})
 		}
