@@ -4,5 +4,9 @@ run:
 	$(GO) build ./server/app.go
 	./app.exe
 
-test:
+testServer:
 	$(GO) test ./server -v
+
+.PHONY: test
+test:
+	$(GO) test ./test -v

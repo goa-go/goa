@@ -3,7 +3,6 @@ package encode
 import (
 	"encoding/json"
 	"encoding/xml"
-	// "github.com/goa-go/goa"
 )
 
 func JSON(v interface{}) []byte {
@@ -25,15 +24,3 @@ func XML(v interface{}) []byte {
 	}
 	return b
 }
-
-// var (
-// 	Marshal = json.Marshal
-// )
-
-// type JSON struct {
-// 	Data interface{}
-// }
-
-// func (c *goa.Context) Json(obj JSON) {
-
-// }
