@@ -7,6 +7,9 @@ run:
 testServer:
 	$(GO) test ./server -v
 
+install:
+	$(GO) get ./...
+
 .PHONY: test
 test:
 	$(GO) test ./test -v
