@@ -58,6 +58,16 @@ func setStatus(c *goa.Context) {
 	}
 }
 
+func hello(c *goa.Context) {
+	name := c.Query("name")
+	c.String("hello " + name)
+}
+
+func postForm(c *goa.Context) {
+	value := c.PostForm("key")
+	c.String("key: " + value)
+}
+
 func main() {
 	app := goa.New()
 	router := router.New()
@@ -71,6 +81,8 @@ func main() {
 		c.Redirect(301, "http://github.com")
 	})
 	router.GET("/status/:code", setStatus)
+	router.GET("/hello", hello)
+	router.POST("/postForm", postForm)
 
 	app.Use(logger)
 	app.Use(router.Routes())

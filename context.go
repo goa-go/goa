@@ -26,8 +26,9 @@ type Context struct {
 	URL    *url.URL
 	Path   string
 
-	Params Params
-	Keys   map[string]interface{}
+	queryMap url.Values
+	Params   Params
+	Keys     map[string]interface{}
 }
 
 func createContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -54,6 +55,45 @@ func (c *Context) Get(key string) (value interface{}, exists bool) {
 	return
 }
 
+// Query returns the keyed url query value or ""
+func (c *Context) Query(key string) string {
+	query, _ := c.GetQuery(key)
+	return query
+}
+
+// GetQuery returns the keyed url query value and isExit
+// if it exists, return (value, true)
+// otherwise it returns ("", false)
+func (c *Context) GetQuery(key string) (string, bool) {
+	if querys, ok := c.GetQueryArray(key); ok {
+		return querys[0], true
+	}
+	return "", false
+}
+
+// GetQueryArray returns a slice of value for a given query key.
+// And returns whether at least one value exists for the given key.
+func (c *Context) GetQueryArray(key string) ([]string, bool) {
+	c.initQuery()
+	if querys, ok := c.queryMap[key]; ok && len(querys) > 0 {
+		return querys, true
+	}
+	return []string{}, false
+}
+
+func (c *Context) initQuery() {
+	if c.queryMap == nil {
+		c.queryMap = make(url.Values)
+		c.queryMap, _ = url.ParseQuery(c.Request.URL.RawQuery)
+	}
+}
+
+// PostForm returns the value from a POST form or "".
+func (c *Context) PostForm(key string) string {
+	return c.Request.PostFormValue(key)
+}
+
+// Param returns the value of the URL param or "".
 func (c *Context) Param(key string) string {
 	return c.Params.Get(key)
 }
@@ -72,9 +112,7 @@ func (ps Params) Get(name string) string {
 // Status sets the HTTP response code.
 // And return context, so c.Status(200).JSON(...) is supported.
 func (c *Context) Status(code int) *Context {
-
 	c.ResponseWriter.WriteHeader(code)
-
 	return c
 }
 

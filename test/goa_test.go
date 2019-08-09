@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/goa-go/goa"
@@ -52,6 +53,16 @@ func setStatus(c *goa.Context) {
 	}
 }
 
+func hello(c *goa.Context) {
+	name := c.Query("name")
+	c.String("hello " + name)
+}
+
+func postForm(c *goa.Context) {
+	value := c.PostForm("key")
+	c.String("key: " + value)
+}
+
 func run() {
 	app := goa.New()
 	router := router.New()
@@ -65,6 +76,8 @@ func run() {
 		c.Redirect(301, "http://github.com")
 	})
 	router.GET("/status/:code", setStatus)
+	router.GET("/hello", hello)
+	router.POST("/postForm", postForm)
 
 	app.Use(router.Routes())
 	go app.Listen(":3000")
@@ -154,5 +167,32 @@ func TestXml(t *testing.T) {
 
 	if string(body) != string(b) {
 		t.Error("xml error")
+	}
+}
+
+func TestQuery(t *testing.T) {
+	resp, err := http.Get("http://localhost:3000/hello?name=nicholascao")
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "hello nicholascao" {
+		t.Error("request error")
+	}
+}
+
+func TestPostForm(t *testing.T) {
+	resp, err := http.Post("http://localhost:3000/postForm", "application/x-www-form-urlencoded;", strings.NewReader("key=value"))
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "key: value" {
+		t.Error(string(body))
 	}
 }
