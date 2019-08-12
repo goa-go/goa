@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-const Version = "1.1.0"
-
 type Middleware func(*Context, func())
 type Middlewares []Middleware
 

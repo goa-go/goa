@@ -1,17 +1,17 @@
-1.1.1 / 2019-08-09
+0.1.1 / 2019-08-09
 ==================
 
 **feat**
   - add context.Query
   - add context.PostForm
 
-1.1.0 / 2019-08-07
+0.1.0 / 2019-08-07
 ==================
 
 **feat**
-  - add goa-context, built goa-router based on httprouter
+  - add goa-context, build goa-router based on httprouter
 
-1.0.0 / 2019-07-30
+0.0.0 / 2019-07-30
 ==================
 
 **init**
