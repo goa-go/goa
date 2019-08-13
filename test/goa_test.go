@@ -1,7 +1,6 @@
 package goa_test
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/goa-go/goa"
 	"github.com/goa-go/goa/router"
+	json "github.com/json-iterator/go"
 )
 
 func xmlHandler(c *goa.Context) {
@@ -123,17 +123,27 @@ func TestJson(t *testing.T) {
 		t.Error("request /json error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	// type JSON2 struct {
+	// 	key string
+	// }
+	// type JSON struct {
+	// 	int    int
+	// 	string string
+	// 	json   JSON2
+	// }
+	// json2 := {key: "value"}
+	var obj map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&obj)
 
-	b, _ := json.MarshalIndent(map[string]interface{}{
-		"string": "string",
-		"int":    1,
-		"json": map[string]interface{}{
-			"key": "value",
-		},
-	}, "", "  ")
-
-	if string(body) != string(b) {
+	if obj["string"] == "string" && obj["int"] == 1.0 {
+		if obj2, ok := obj["json"].(map[string]interface{}); ok {
+			if obj2["key"] != "value" {
+				t.Error("json error")
+			}
+		} else {
+			t.Error("json error")
+		}
+	} else {
 		t.Error("json error")
 	}
 }
@@ -163,10 +173,10 @@ func TestXml(t *testing.T) {
 	XML.Comment = " Need more details. "
 	XML.Address = Address{"Hanga Roa", "Easter Island"}
 
-	b, _ := xml.MarshalIndent(XML, "", "  ")
+	b, _ := xml.Marshal(XML)
 
 	if string(body) != string(b) {
-		t.Error("xml error")
+		t.Error("xml error", string(b))
 	}
 }
 
