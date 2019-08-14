@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
@@ -13,23 +14,25 @@ import (
 	json "github.com/json-iterator/go"
 )
 
+// xml test case
+type Address struct {
+	City, Country string
+}
+type Person struct {
+	Id        int     `xml:"id,attr"`
+	FirstName string  `xml:"name>first"`
+	LastName  string  `xml:"name>last"`
+	Age       int     `xml:"age"`
+	Height    float32 `xml:"height,omitempty"`
+	Married   bool
+	Address
+	Comment string `xml:",comment"`
+}
+
 func xmlHandler(c *goa.Context) {
-	type Address struct {
-		City, State string
-	}
-	type Person struct {
-		Id        int     `xml:"id,attr"`
-		FirstName string  `xml:"name>first"`
-		LastName  string  `xml:"name>last"`
-		Age       int     `xml:"age"`
-		Height    float32 `xml:"height,omitempty"`
-		Married   bool
-		Address
-		Comment string `xml:",comment"`
-	}
-	xml := &Person{Id: 13, FirstName: "John", LastName: "Doe", Age: 42}
-	xml.Comment = " Need more details. "
-	xml.Address = Address{"Hanga Roa", "Easter Island"}
+	xml := &Person{Id: 26, FirstName: "Nicholas", LastName: "Cao", Age: 18}
+	xml.Comment = " Nice man. "
+	xml.Address = Address{"Have a guess", "CN"}
 	c.XML(xml)
 }
 
@@ -63,7 +66,7 @@ func postForm(c *goa.Context) {
 	c.String("key: " + value)
 }
 
-func run() {
+func initServer() *httptest.Server {
 	app := goa.New()
 	router := router.New()
 
@@ -73,19 +76,25 @@ func run() {
 	router.GET("/xml", xmlHandler)
 	router.GET("/json", jsonHandler)
 	router.GET("/redirect", func(c *goa.Context) {
-		c.Redirect(301, "http://github.com")
+		c.Redirect(301, "/")
 	})
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
 	router.POST("/postForm", postForm)
 
 	app.Use(router.Routes())
-	go app.Listen(":3000")
+
+	// Before testing, must compose middlewares.
+	app.ComposeMiddlewares()
+	return httptest.NewServer(app)
 }
 
 func TestRequest(t *testing.T) {
-	run()
-	resp, err := http.Get("http://localhost:3000")
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL)
+
 	if err != nil {
 		t.Error("request error")
 	}
@@ -105,7 +114,10 @@ func TestStatusCode(t *testing.T) {
 }
 
 func testStatusCode(t *testing.T, code int) {
-	resp, err := http.Get("http://localhost:3000/status/" + strconv.Itoa(code))
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/status/" + strconv.Itoa(code))
 	if err != nil {
 		t.Error("request /status error")
 	}
@@ -118,20 +130,15 @@ func testStatusCode(t *testing.T, code int) {
 }
 
 func TestJson(t *testing.T) {
-	resp, err := http.Get("http://localhost:3000/json")
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/json")
 	if err != nil {
 		t.Error("request /json error")
 	}
 	defer resp.Body.Close()
-	// type JSON2 struct {
-	// 	key string
-	// }
-	// type JSON struct {
-	// 	int    int
-	// 	string string
-	// 	json   JSON2
-	// }
-	// json2 := {key: "value"}
+
 	var obj map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&obj)
 
@@ -149,29 +156,19 @@ func TestJson(t *testing.T) {
 }
 
 func TestXml(t *testing.T) {
-	resp, err := http.Get("http://localhost:3000/xml")
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/xml")
 	if err != nil {
 		t.Error("request /xml error")
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	type Address struct {
-		City, State string
-	}
-	type Person struct {
-		Id        int     `xml:"id,attr"`
-		FirstName string  `xml:"name>first"`
-		LastName  string  `xml:"name>last"`
-		Age       int     `xml:"age"`
-		Height    float32 `xml:"height,omitempty"`
-		Married   bool
-		Address
-		Comment string `xml:",comment"`
-	}
-	XML := &Person{Id: 13, FirstName: "John", LastName: "Doe", Age: 42}
-	XML.Comment = " Need more details. "
-	XML.Address = Address{"Hanga Roa", "Easter Island"}
+	XML := &Person{Id: 26, FirstName: "Nicholas", LastName: "Cao", Age: 18}
+	XML.Comment = " Nice man. "
+	XML.Address = Address{"Have a guess", "CN"}
 
 	b, _ := xml.Marshal(XML)
 
@@ -181,7 +178,10 @@ func TestXml(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	resp, err := http.Get("http://localhost:3000/hello?name=nicholascao")
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/hello?name=nicholascao")
 	if err != nil {
 		t.Error("request error")
 	}
@@ -194,7 +194,10 @@ func TestQuery(t *testing.T) {
 }
 
 func TestPostForm(t *testing.T) {
-	resp, err := http.Post("http://localhost:3000/postForm", "application/x-www-form-urlencoded;", strings.NewReader("key=value"))
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Post(server.URL+"/postForm", "application/x-www-form-urlencoded;", strings.NewReader("key=value"))
 	if err != nil {
 		t.Error("request error")
 	}
@@ -204,5 +207,21 @@ func TestPostForm(t *testing.T) {
 
 	if string(body) != "key: value" {
 		t.Error(string(body))
+	}
+}
+
+func TestRedirect(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/redirect")
+	if err != nil {
+		t.Error("request error")
+	}
+
+	defer resp.Body.Close()
+	b, _ := ioutil.ReadAll(resp.Body)
+	if string(b) != "hello world" {
+		t.Error("redirect error")
 	}
 }

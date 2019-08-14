@@ -22,12 +22,20 @@ func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handleRequest(app.Context)
 }
 
+// Use a middleware.
 func (app *Goa) Use(m Middleware) {
 	app.middlewares = append(app.middlewares, m)
 }
 
-func (app *Goa) Listen(addr string) {
+// Compose middleware,
+// httptest is only available after ComposeMiddlewares is called.
+func (app *Goa) ComposeMiddlewares() {
 	app.handleRequest = compose(app.middlewares)
+}
+
+// Start server with addr.
+func (app *Goa) Listen(addr string) {
+	app.ComposeMiddlewares()
 	http.ListenAndServe(addr, app)
 }
 
