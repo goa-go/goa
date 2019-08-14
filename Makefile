@@ -12,4 +12,4 @@ install:
 
 .PHONY: test
 test:
-	$(GO) test ./test -v
+	$(GO) test ./test/... -v

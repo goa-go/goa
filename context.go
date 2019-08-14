@@ -129,12 +129,12 @@ func (c *Context) Parse(p parser.Parser) {
 }
 
 // parse json-data, require a pointer
-func (c *Context) ParseJson(pointer interface{}) {
+func (c *Context) ParseJSON(pointer interface{}) {
 	c.Parse(parser.JSON{Pointer: pointer})
 }
 
 // parse xml-data, require a pointer
-func (c *Context) ParseXml(pointer interface{}) {
+func (c *Context) ParseXML(pointer interface{}) {
 	c.Parse(parser.XML{Pointer: pointer})
 }
 
