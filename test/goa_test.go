@@ -50,9 +50,11 @@ func setStatus(c *goa.Context) {
 	code := c.Param("code")
 	int, err := strconv.Atoi(code)
 	if err != nil {
-		c.Status(400).String("plz input int")
+		c.Status = 400
+		c.String("plz input int")
 	} else {
-		c.Status(int).String("ok")
+		c.Status = int
+		c.String("ok")
 	}
 }
 
@@ -76,7 +78,7 @@ func initServer() *httptest.Server {
 	router.GET("/xml", xmlHandler)
 	router.GET("/json", jsonHandler)
 	router.GET("/redirect", func(c *goa.Context) {
-		c.Redirect(301, "/")
+		c.Redirect(302, "/")
 	})
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
@@ -124,8 +126,8 @@ func testStatusCode(t *testing.T, code int) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != "ok" && resp.StatusCode == code {
-		t.Error("status code error")
+	if string(body) != "ok" || resp.StatusCode != code {
+		t.Error("status code error: " + strconv.Itoa(code))
 	}
 }
 

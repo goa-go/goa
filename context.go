@@ -1,6 +1,7 @@
 package goa
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -23,22 +24,33 @@ type Context struct {
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
 
-	Method      string
-	URL         *url.URL
-	Path        string
-	Header      http.Header
-	ContentType string
+	Method string
+	URL    *url.URL
+	Path   string
+	Header http.Header
 
 	queryMap url.Values
 	Params   Params
 	Keys     map[string]interface{}
+
+	// Response status code.
+	Status int
+
+	// Content-Type
+	Type string
+
+	// Body will be wrote in response,
+	// use it just like `c.Body = ...`.
+	// Only string and struct will be supported.
+	// If body is struct, will parse it as json.
+	// If u want to respond xml or other type data, u can `c.XML(...)` or encode it into string.
+	Body interface{}
+
+	responser responser.Responser
 }
 
 func createContext(w http.ResponseWriter, r *http.Request) *Context {
-	contentType := ""
-	if len(r.Header["Content-Type"]) > 0 {
-		contentType = r.Header["Content-Type"][0]
-	}
+
 	return &Context{
 		Request:        r,
 		ResponseWriter: w,
@@ -46,7 +58,6 @@ func createContext(w http.ResponseWriter, r *http.Request) *Context {
 		URL:            r.URL,
 		Path:           r.URL.Path,
 		Header:         r.Header,
-		ContentType:    contentType,
 	}
 }
 
@@ -151,9 +162,12 @@ func (c *Context) ParseString() string {
 
 /* handle response */
 
-// Status sets the HTTP response code.
-// And return context, so c.Status(200).JSON(...) is supported.
-func (c *Context) Status(code int) *Context {
+// status sets the HTTP response code.
+func (c *Context) status() *Context {
+	code := c.Status
+	if code < 100 || code > 999 {
+		panic(fmt.Sprintf("invalid status code: %d", code))
+	}
 	c.ResponseWriter.WriteHeader(code)
 	return c
 }
@@ -170,20 +184,32 @@ func (c *Context) Respond(r responser.Responser) {
 
 // respond json-data
 func (c *Context) JSON(json interface{}) {
-	writeContentType(c.ResponseWriter, []string{"application/json; charset=utf-8"})
-	c.Respond(responser.JSON{Data: json})
+	// writeContentType(c.ResponseWriter, []string{"application/json; charset=utf-8"})
+	c.Type = "application/json; charset=utf-8"
+	// c.Respond(responser.JSON{Data: json})
+	c.responser = responser.JSON{Data: json}
 }
 
 // respond xml-data
 func (c *Context) XML(xml interface{}) {
-	writeContentType(c.ResponseWriter, []string{"application/xml; charset=utf-8"})
-	c.Respond(responser.XML{Data: xml})
+	// writeContentType(c.ResponseWriter, []string{"application/xml; charset=utf-8"})
+	c.Type = "application/xml; charset=utf-8"
+	// c.Respond(responser.XML{Data: xml})
+	c.responser = responser.XML{Data: xml}
 }
 
 // respond string-data
 func (c *Context) String(str string) {
-	writeContentType(c.ResponseWriter, []string{"text/plain; charset=utf-8"})
-	c.Respond(responser.String{Data: str})
+	// writeContentType(c.ResponseWriter, []string{"text/plain; charset=utf-8"})
+	c.Type = "text/plain; charset=utf-8"
+	// c.Respond(responser.String{Data: str})
+	c.responser = responser.String{Data: str}
+}
+
+// respond html
+func (c *Context) HTML(str string) {
+	c.Type = "text/html; charset=utf-8"
+	c.responser = responser.String{Data: str}
 }
 
 // redirect
@@ -192,6 +218,7 @@ func (c *Context) Redirect(code int, url string) {
 }
 
 // Set http response header.
+// It should be called before Status and Respond.
 func (c *Context) SetHeader(key string, value string) {
 	c.ResponseWriter.Header().Set(key, value)
 }
@@ -201,4 +228,8 @@ func writeContentType(w http.ResponseWriter, contentType []string) {
 	if val := header["Content-Type"]; len(val) == 0 {
 		header["Content-Type"] = contentType
 	}
+}
+
+func (c *Context) Error(msg string) {
+	panic(msg)
 }
