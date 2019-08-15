@@ -45,9 +45,21 @@ import (
 func logger(c *goa.Context, next func()) {
   start := time.Now()
 
-  fmt.Printf("[%s] <-- %s %s\n", start.Format("2006-6-2 15:04:05"), c.Method, c.URL)
-  next()
-  fmt.Printf("[%s] --> %s %s %d%s\n", time.Now().Format("2006-6-2 15:04:05"), c.Method, c.URL, time.Since(start).Nanoseconds()/1e6, "ms")
+  fmt.Printf(
+		"[%s] <-- %s %s\n",
+		start.Format("2006-6-2 15:04:05"),
+		c.Method,
+		c.URL,
+	)
+	next()
+	fmt.Printf(
+		"[%s] --> %s %s %d %s\n",
+		time.Now().Format("2006-6-2 15:04:05"),
+		c.Method,
+		c.URL,
+		time.Since(start).Nanoseconds()/1e6,
+		"ms",
+	)
 }
 
 func json(c *goa.Context) {
