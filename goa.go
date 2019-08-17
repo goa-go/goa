@@ -1,4 +1,3 @@
-// goa
 package goa
 
 import (
@@ -10,11 +9,17 @@ import (
 	"github.com/goa-go/goa/responser"
 )
 
+// Middleware is based part of goa,
+// any processing will take place here.
+// should be used liked app.Use(middleware).
 type Middleware func(*Context, func())
+
+// Middlewares is []Middleware.
 type Middlewares []Middleware
 
 type middlewareHandler func(*Context)
 
+// Goa is the framework's instance.
 type Goa struct {
 	middlewares Middlewares
 
@@ -22,7 +27,7 @@ type Goa struct {
 	middlewareHandler middlewareHandler
 }
 
-// Init goa.
+// New returns the initialized Goa instance.
 func New() *Goa {
 	return &Goa{}
 }
@@ -37,13 +42,14 @@ func (app *Goa) Use(m Middleware) {
 	app.middlewares = append(app.middlewares, m)
 }
 
-// Compose middleware,
-// httptest is only available after ComposeMiddlewares is called.
+// ComposeMiddlewares composes middleware,
+// it doesn't need to be called manually except in testing,
+// but httptest is only available after ComposeMiddlewares is called.
 func (app *Goa) ComposeMiddlewares() {
 	app.middlewareHandler = compose(app.middlewares)
 }
 
-// Start server with addr.
+// Listen starts server with the addr.
 func (app *Goa) Listen(addr string) {
 	app.ComposeMiddlewares()
 	http.ListenAndServe(addr, app)
@@ -74,7 +80,9 @@ func (app *Goa) handleRequest(c *Context, fn middlewareHandler) {
 	}()
 
 	fn(c)
-	app.handleResponse(c)
+	if !c.redirected {
+		app.handleResponse(c)
+	}
 }
 
 func (app *Goa) handleResponse(c *Context) {
@@ -108,11 +116,11 @@ func (app *Goa) handleResponse(c *Context) {
 			c.Status = 200
 		}
 	}
-	c.status()
+	c.status(c.Status)
 
 	// Response
 	if c.responser != nil {
-		c.Respond(c.responser)
+		c.respond(c.responser)
 		return
 	}
 }
@@ -120,14 +128,6 @@ func (app *Goa) handleResponse(c *Context) {
 func (app *Goa) onerror(err interface{}) {
 	c := app.Context
 
-	if c.Status != 0 {
-		c.status()
-	} else {
-		c.Status = 500
-		c.status()
-	}
-
+	c.status(c.ErrorStatusCode)
 	fmt.Fprint(c.ResponseWriter, err)
-
-	fmt.Println(err)
 }

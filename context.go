@@ -20,6 +20,7 @@ type Param struct {
 // It is therefore safe to read values by the index.
 type Params []Param
 
+// Context is used to receive requests and respond to requests.
 type Context struct {
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
@@ -36,8 +37,13 @@ type Context struct {
 	// Response status code.
 	Status int
 
+	// Error Status code.
+	ErrorStatusCode int
+
 	// Content-Type
 	Type string
+
+	redirected bool
 
 	// Body will be wrote in response,
 	// use it just like `c.Body = ...`.
@@ -52,16 +58,17 @@ type Context struct {
 func createContext(w http.ResponseWriter, r *http.Request) *Context {
 
 	return &Context{
-		Request:        r,
-		ResponseWriter: w,
-		Method:         r.Method,
-		URL:            r.URL,
-		Path:           r.URL.Path,
-		Header:         r.Header,
+		Request:         r,
+		ResponseWriter:  w,
+		Method:          r.Method,
+		URL:             r.URL,
+		Path:            r.URL.Path,
+		Header:          r.Header,
+		ErrorStatusCode: 500,
 	}
 }
 
-// Context set value.
+// Set value.
 func (c *Context) Set(key string, value interface{}) {
 	if c.Keys == nil {
 		c.Keys = make(map[string]interface{})
@@ -69,7 +76,7 @@ func (c *Context) Set(key string, value interface{}) {
 	c.Keys[key] = value
 }
 
-// Context get value, return (value, exists).
+// Get value, return (value, exists).
 func (c *Context) Get(key string) (value interface{}, exists bool) {
 	value, exists = c.Keys[key]
 	return
@@ -132,19 +139,19 @@ func (ps Params) Get(name string) string {
 	return ""
 }
 
-// handle parser
+// Parse handles parser.
 func (c *Context) Parse(p parser.Parser) {
 	if err := p.Parse(c.Request); err != nil {
 		panic(err)
 	}
 }
 
-// parse json-data, require a pointer
+// ParseJSON parses json-data, require a pointer.
 func (c *Context) ParseJSON(pointer interface{}) {
 	c.Parse(parser.JSON{Pointer: pointer})
 }
 
-// parse xml-data, require a pointer
+// ParseXML parses xml-data, require a pointer.
 func (c *Context) ParseXML(pointer interface{}) {
 	c.Parse(parser.XML{Pointer: pointer})
 }
@@ -163,8 +170,7 @@ func (c *Context) ParseString() string {
 /* handle response */
 
 // status sets the HTTP response code.
-func (c *Context) status() *Context {
-	code := c.Status
+func (c *Context) status(code int) *Context {
 	if code < 100 || code > 999 {
 		panic(fmt.Sprintf("invalid status code: %d", code))
 	}
@@ -176,48 +182,43 @@ func (c *Context) status() *Context {
 // Use is as c.JSON(&goa.M{...})
 type M map[string]interface{}
 
-func (c *Context) Respond(r responser.Responser) {
+func (c *Context) respond(r responser.Responser) {
 	if err := r.Respond(c.ResponseWriter); err != nil {
 		panic(err)
 	}
 }
 
-// respond json-data
+// JSON responds json-data.
 func (c *Context) JSON(json interface{}) {
-	// writeContentType(c.ResponseWriter, []string{"application/json; charset=utf-8"})
 	c.Type = "application/json; charset=utf-8"
-	// c.Respond(responser.JSON{Data: json})
 	c.responser = responser.JSON{Data: json}
 }
 
-// respond xml-data
+// XML responds xml-data.
 func (c *Context) XML(xml interface{}) {
-	// writeContentType(c.ResponseWriter, []string{"application/xml; charset=utf-8"})
 	c.Type = "application/xml; charset=utf-8"
-	// c.Respond(responser.XML{Data: xml})
 	c.responser = responser.XML{Data: xml}
 }
 
-// respond string-data
+// String responds string-data.
 func (c *Context) String(str string) {
-	// writeContentType(c.ResponseWriter, []string{"text/plain; charset=utf-8"})
 	c.Type = "text/plain; charset=utf-8"
-	// c.Respond(responser.String{Data: str})
 	c.responser = responser.String{Data: str}
 }
 
-// respond html
+// HTML responds html.
 func (c *Context) HTML(str string) {
 	c.Type = "text/html; charset=utf-8"
 	c.responser = responser.String{Data: str}
 }
 
-// redirect
+// Redirect replies to the request with a redirect to url and a status code.
 func (c *Context) Redirect(code int, url string) {
+	c.redirected = true
 	http.Redirect(c.ResponseWriter, c.Request, url, code)
 }
 
-// Set http response header.
+// SetHeader sets http response header.
 // It should be called before Status and Respond.
 func (c *Context) SetHeader(key string, value string) {
 	c.ResponseWriter.Header().Set(key, value)
@@ -230,6 +231,13 @@ func writeContentType(w http.ResponseWriter, contentType []string) {
 	}
 }
 
+// Error throw error.
 func (c *Context) Error(msg string) {
 	panic(msg)
+}
+
+// ErrorWithStatus throw error with a status code.
+func (c *Context) ErrorWithStatus(msg string, status int) {
+	c.ErrorStatusCode = status
+	c.Error(msg)
 }
