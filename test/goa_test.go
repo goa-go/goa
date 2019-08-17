@@ -14,7 +14,7 @@ import (
 	json "github.com/json-iterator/go"
 )
 
-// xml test case
+// xml and json test case
 type Address struct {
 	City, Country string
 }
@@ -23,7 +23,7 @@ type Person struct {
 	FirstName string  `xml:"name>first"`
 	LastName  string  `xml:"name>last"`
 	Age       int     `xml:"age"`
-	Height    float32 `xml:"height,omitempty"`
+	Height    float32 `xml:"height,omitempty" json:"height,omitempty"`
 	Married   bool
 	Address
 	Comment string `xml:",comment"`
@@ -37,13 +37,10 @@ func xmlHandler(c *goa.Context) {
 }
 
 func jsonHandler(c *goa.Context) {
-	c.JSON(goa.M{
-		"string": "string",
-		"int":    1,
-		"json": goa.M{
-			"key": "value",
-		},
-	})
+	obj := Person{Id: 26, FirstName: "Nicholas", LastName: "Cao", Age: 18}
+	obj.Comment = " Nice man. "
+	obj.Address = Address{"Have a guess", "CN"}
+	c.JSON(obj)
 }
 
 func setStatus(c *goa.Context) {
@@ -141,18 +138,16 @@ func TestJson(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	var obj map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&obj)
+	obj := Person{Id: 26, FirstName: "Nicholas", LastName: "Cao", Age: 18}
+	obj.Comment = " Nice man. "
+	obj.Address = Address{"Have a guess", "CN"}
 
-	if obj["string"] == "string" && obj["int"] == 1.0 {
-		if obj2, ok := obj["json"].(map[string]interface{}); ok {
-			if obj2["key"] != "value" {
-				t.Error("json error")
-			}
-		} else {
-			t.Error("json error")
-		}
-	} else {
+	obj2 := Person{}
+	json.NewDecoder(resp.Body).Decode(&obj2)
+
+	b1, _ := json.Marshal(obj)
+	b2, _ := json.Marshal(obj2)
+	if string(b1) != string(b2) {
 		t.Error("json error")
 	}
 }
