@@ -146,9 +146,9 @@ func (app *Goa) onerror(err interface{}) {
 	c.Type = "text/plain; charset=utf-8"
 	c.SetHeader("Content-Type", c.Type)
 	c.status(c.errorStatusCode)
-	if errResponse != nil {
+	if errResponse != nil && errResponse != "" {
 		fmt.Fprint(c.ResponseWriter, errResponse)
 	} else {
-		fmt.Fprint(c.ResponseWriter, "error")
+		fmt.Fprint(c.ResponseWriter, "Internal Server Error")
 	}
 }
