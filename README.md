@@ -1,6 +1,9 @@
 # Goa
 
 [![CI](https://img.shields.io/travis/goa-go/goa.svg?style=flat)](https://travis-ci.org/goa-go/goa)
+[![CODECOV](https://img.shields.io/codecov/c/github/goa-go/goa.svg?style=flat)](https://codecov.io/github/goa-go/goa?branch=master)
+[![GoDoc](https://godoc.org/github.com/goa-go/goa?status.svg)](http://godoc.org/github.com/goa-go/goa)
+[![Report](https://goreportcard.com/badge/github.com/goa-go/goa)](https://goreportcard.com/report/github.com/goa-go/goa)
 [![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/goa-go/goa/pull/new)
 
 Goa is under construction, if you are familiar with [koa](https://github.com/koajs/koa) or go and interested in this project, please join us.
@@ -21,7 +24,7 @@ func main() {
   app := New()
 
   app.Use(func(c *goa.Context, next func()) {
-    c.String("Hello Goa!")
+    c.Body = "Hello Goa!"
     next()
   })
   app.Listen(":3000")
@@ -62,28 +65,17 @@ func logger(c *goa.Context, next func()) {
 	)
 }
 
-func json(c *goa.Context) {
-  c.JSON(goa.M{
-    "string": "string",
-    "int":    1,
-    "json": goa.M{
-      "key": "value",
-    },
-  })
-}
-
 func main() {
   app := goa.New()
   router := router.New()
 
   router.GET("/", func(c *goa.Context) {
-    c.String("hello world")
+    c.Body = "Hello Goa!"
   })
-  router.GET("/json", json)
 
   app.Use(logger)
   app.Use(router.Routes())
-  app.Listen(":3000")
+  log.Fatal(app.Listen(":3000"))
 }
 ```
 
