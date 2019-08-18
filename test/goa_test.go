@@ -72,10 +72,18 @@ func initServer() *httptest.Server {
 	router.GET("/", func(c *goa.Context) {
 		c.String("hello world")
 	})
+	router.GET("/html", func(c *goa.Context) {
+		c.HTML("<p>html</p>")
+	})
 	router.GET("/xml", xmlHandler)
 	router.GET("/json", jsonHandler)
 	router.GET("/redirect", func(c *goa.Context) {
 		c.Redirect(302, "/")
+	})
+	router.GET("/keys", func(c *goa.Context) {
+		c.Set("key", "value")
+		v, _ := c.Get("key")
+		c.String(v.(string))
 	})
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
@@ -105,6 +113,23 @@ func TestRequest(t *testing.T) {
 
 	if string(body) != "hello world" {
 		t.Error("request error")
+	}
+}
+
+func TestHTML(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/string")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != `<p>html</p>` && resp.Header["Content-Type"][0] == "text/html; charset=utf-8" {
+		t.Error("html-body error")
 	}
 }
 
@@ -174,6 +199,23 @@ func TestXML(t *testing.T) {
 
 	if string(body) != string(b) {
 		t.Error("xml error", string(b))
+	}
+}
+
+func TestKeys(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/keys")
+
+	if err != nil {
+		t.Error("keys error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "value" {
+		t.Error("keys error")
 	}
 }
 
