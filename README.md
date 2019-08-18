@@ -36,7 +36,6 @@ func main() {
 ## Middleware
 
 Goa is a web framework based on middleware.
-
 Here is an example of using goa-router and logger.
 ```go
 package main
@@ -83,7 +82,7 @@ func main() {
 }
 ```
 
-If you are unwilling to use goa's own routing, you can make a custom router middleware as you like. With middleware, you can expand functionality to meet your needs at will.
+If you are unwilling to use goa-router, you can make a custom router middleware as you like. With middleware, you can expand functionality to meet your needs at will.
 
 ## License
 
