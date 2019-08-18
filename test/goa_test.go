@@ -80,6 +80,9 @@ func initServer() *httptest.Server {
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
 	router.POST("/postForm", postForm)
+	router.GET("/error", func(c *goa.Context) {
+		c.Error(goa.Error{Msg: "msg", Status: 500})
+	})
 
 	app.Use(router.Routes())
 
@@ -128,7 +131,7 @@ func testStatusCode(t *testing.T, code int) {
 	}
 }
 
-func TestJson(t *testing.T) {
+func TestJSON(t *testing.T) {
 	server := initServer()
 	defer server.Close()
 
@@ -152,7 +155,7 @@ func TestJson(t *testing.T) {
 	}
 }
 
-func TestXml(t *testing.T) {
+func TestXML(t *testing.T) {
 	server := initServer()
 	defer server.Close()
 
@@ -220,5 +223,22 @@ func TestRedirect(t *testing.T) {
 	b, _ := ioutil.ReadAll(resp.Body)
 	if string(b) != "hello world" {
 		t.Error("redirect error")
+	}
+}
+
+func TestError(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/error")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "msg" && resp.StatusCode != 500 {
+		t.Error("onerror error")
 	}
 }

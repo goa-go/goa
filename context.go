@@ -231,13 +231,18 @@ func writeContentType(w http.ResponseWriter, contentType []string) {
 	}
 }
 
-// Error throw error.
-func (c *Context) Error(msg string) {
-	panic(msg)
+// Error is used like c.Error(goa.Error{...}).
+// It will create a http-error.
+type Error struct {
+	Msg    string
+	Status int
 }
 
-// ErrorWithStatus throw error with a status code.
-func (c *Context) ErrorWithStatus(msg string, status int) {
-	c.ErrorStatusCode = status
-	c.Error(msg)
+// Error throw a http-error.
+func (c *Context) Error(err Error) {
+	if err.Status == 0 {
+		err.Status = 500
+	}
+
+	panic(err)
 }

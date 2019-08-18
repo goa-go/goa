@@ -2,11 +2,13 @@ package goa
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 	"regexp"
 
 	"github.com/goa-go/goa/responser"
+	"github.com/pkg/errors"
 )
 
 // Middleware is based part of goa,
@@ -50,9 +52,9 @@ func (app *Goa) ComposeMiddlewares() {
 }
 
 // Listen starts server with the addr.
-func (app *Goa) Listen(addr string) {
+func (app *Goa) Listen(addr string) error {
 	app.ComposeMiddlewares()
-	http.ListenAndServe(addr, app)
+	return http.ListenAndServe(addr, app)
 }
 
 func compose(m Middlewares) middlewareHandler {
@@ -128,6 +130,21 @@ func (app *Goa) handleResponse(c *Context) {
 func (app *Goa) onerror(err interface{}) {
 	c := app.Context
 
+	var errResponse interface{}
+
+	if e, ok := err.(Error); ok {
+		c.ErrorStatusCode = e.Status
+		errResponse = e.Msg
+	} else if e, ok := err.(error); ok {
+		log.Printf("[ERROR] %+v", errors.WithStack(e))
+		errResponse = e.Error()
+	} else {
+		log.Print("[ERROR] ", err)
+		errResponse = err
+	}
+
+	c.Type = "text/plain; charset=utf-8"
+	c.SetHeader("Content-Type", c.Type)
 	c.status(c.ErrorStatusCode)
-	fmt.Fprint(c.ResponseWriter, err)
+	fmt.Fprint(c.ResponseWriter, errResponse)
 }
