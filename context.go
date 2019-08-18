@@ -38,7 +38,7 @@ type Context struct {
 	Status int
 
 	// Error Status code.
-	ErrorStatusCode int
+	errorStatusCode int
 
 	// Content-Type
 	Type string
@@ -64,7 +64,7 @@ func createContext(w http.ResponseWriter, r *http.Request) *Context {
 		URL:             r.URL,
 		Path:            r.URL.Path,
 		Header:          r.Header,
-		ErrorStatusCode: 500,
+		errorStatusCode: 500,
 	}
 }
 
@@ -170,12 +170,11 @@ func (c *Context) ParseString() string {
 /* handle response */
 
 // status sets the HTTP response code.
-func (c *Context) status(code int) *Context {
+func (c *Context) status(code int) {
 	if code < 100 || code > 999 {
-		panic(fmt.Sprintf("invalid status code: %d", code))
+		panic(fmt.Errorf("invalid status code: %d", code))
 	}
 	c.ResponseWriter.WriteHeader(code)
-	return c
 }
 
 // M is a convenient alias for a map[string]interface{} map.
@@ -222,13 +221,6 @@ func (c *Context) Redirect(code int, url string) {
 // It should be called before Status and Respond.
 func (c *Context) SetHeader(key string, value string) {
 	c.ResponseWriter.Header().Set(key, value)
-}
-
-func writeContentType(w http.ResponseWriter, contentType []string) {
-	header := w.Header()
-	if val := header["Content-Type"]; len(val) == 0 {
-		header["Content-Type"] = contentType
-	}
 }
 
 // Error is used like c.Error(goa.Error{...}).

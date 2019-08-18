@@ -133,7 +133,7 @@ func (app *Goa) onerror(err interface{}) {
 	var errResponse interface{}
 
 	if e, ok := err.(Error); ok {
-		c.ErrorStatusCode = e.Status
+		c.errorStatusCode = e.Status
 		errResponse = e.Msg
 	} else if e, ok := err.(error); ok {
 		log.Printf("[ERROR] %+v", errors.WithStack(e))
@@ -145,6 +145,10 @@ func (app *Goa) onerror(err interface{}) {
 
 	c.Type = "text/plain; charset=utf-8"
 	c.SetHeader("Content-Type", c.Type)
-	c.status(c.ErrorStatusCode)
-	fmt.Fprint(c.ResponseWriter, errResponse)
+	c.status(c.errorStatusCode)
+	if errResponse != nil {
+		fmt.Fprint(c.ResponseWriter, errResponse)
+	} else {
+		fmt.Fprint(c.ResponseWriter, "error")
+	}
 }

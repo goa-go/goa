@@ -12,4 +12,8 @@ test:
 	$(GO) test ./test/... -v
 
 test_cover:
-	$(GO) test -race -coverprofile=coverage.txt -covermode=atomic -coverpkg=./,./responser ./test/ ./test/body
+	$(GO) test -race -coverprofile=coverage.txt -covermode=atomic -coverpkg=./,./responser,./parser ./test/...
+
+test_cover_html: test_cover
+	$(GO) tool cover -html=coverage.txt -o coverage.html
+

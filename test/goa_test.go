@@ -2,6 +2,7 @@ package goa_test
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -120,7 +121,7 @@ func TestHTML(t *testing.T) {
 	server := initServer()
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/string")
+	resp, err := http.Get(server.URL + "/html")
 
 	if err != nil {
 		t.Error("request error")
@@ -128,8 +129,8 @@ func TestHTML(t *testing.T) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != `<p>html</p>` && resp.Header["Content-Type"][0] == "text/html; charset=utf-8" {
-		t.Error("html-body error")
+	if string(body) != "<p>html</p>" || resp.Header["Content-Type"][0] != "text/html; charset=utf-8" {
+		t.Error("html error")
 	}
 }
 
@@ -138,6 +139,7 @@ func TestStatusCode(t *testing.T) {
 	testStatusCode(t, 300)
 	testStatusCode(t, 400)
 	testStatusCode(t, 500)
+	testStatusCode(t, 99)
 }
 
 func testStatusCode(t *testing.T, code int) {
@@ -151,7 +153,11 @@ func testStatusCode(t *testing.T, code int) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != "ok" || resp.StatusCode != code {
+	if code < 100 || code > 999 {
+		if string(body) != fmt.Sprintf("invalid status code: %d", code) {
+			t.Error("error status code error")
+		}
+	} else if string(body) != "ok" || resp.StatusCode != code {
 		t.Error("status code error: " + strconv.Itoa(code))
 	}
 }

@@ -44,7 +44,7 @@ func initServer() *httptest.Server {
 	})
 
 	router.GET("/html", func(c *goa.Context) {
-		c.Body = `<p>html</p>`
+		c.Body = "<p>html</p>"
 	})
 	router.GET("/json", jsonHandler)
 
@@ -76,7 +76,7 @@ func TestHTML(t *testing.T) {
 	server := initServer()
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/string")
+	resp, err := http.Get(server.URL + "/html")
 
 	if err != nil {
 		t.Error("request error")
@@ -84,7 +84,7 @@ func TestHTML(t *testing.T) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != `<p>html</p>` && resp.Header["Content-Type"][0] == "text/html; charset=utf-8" {
+	if string(body) != "<p>html</p>" || resp.Header["Content-Type"][0] != "text/html; charset=utf-8" {
 		t.Error("html-body error")
 	}
 }
