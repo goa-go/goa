@@ -158,11 +158,7 @@ func (c *Context) ParseXML(pointer interface{}) {
 
 // ParseString returns string-data
 func (c *Context) ParseString() string {
-	str, err := parser.String{}.Parse(c.Request)
-
-	if err != nil {
-		panic(err)
-	}
+	str := parser.String{}.Parse(c.Request)
 
 	return str
 }

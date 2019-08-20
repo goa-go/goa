@@ -46,6 +46,10 @@ func jsonHandler(c *goa.Context) {
 
 func setStatus(c *goa.Context) {
 	code := c.Param("code")
+	code2 := c.Param("code2")
+	if code2 != "" {
+		panic("params error")
+	}
 	int, err := strconv.Atoi(code)
 	if err != nil {
 		c.Status = 400
@@ -58,7 +62,8 @@ func setStatus(c *goa.Context) {
 
 func hello(c *goa.Context) {
 	name := c.Query("name")
-	c.String("hello " + name)
+	name2 := c.Query("name2")
+	c.String("hello " + name + "," + name2)
 }
 
 func postForm(c *goa.Context) {
@@ -78,6 +83,9 @@ func initServer() *httptest.Server {
 	})
 	router.GET("/xml", xmlHandler)
 	router.GET("/json", jsonHandler)
+	router.GET("/xmlerror", func(c *goa.Context) {
+		c.XML([]byte{1, 2, 3})
+	})
 	router.GET("/redirect", func(c *goa.Context) {
 		c.Redirect(302, "/")
 	})
@@ -86,11 +94,26 @@ func initServer() *httptest.Server {
 		v, _ := c.Get("key")
 		c.String(v.(string))
 	})
+	router.GET("/keys2", func(c *goa.Context) {
+		v2, _ := c.Get("key2")
+		if v2 == nil {
+			c.Error(goa.Error{
+				Msg:    "key does not exist",
+				Status: 500,
+			})
+		}
+	})
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
 	router.POST("/postForm", postForm)
 	router.GET("/error", func(c *goa.Context) {
-		c.Error(goa.Error{Msg: "msg", Status: 500})
+		c.Error(goa.Error{Msg: "msg"})
+	})
+	router.GET("/stringerror", func(c *goa.Context) {
+		panic("error")
+	})
+	router.GET("/emptyerror", func(c *goa.Context) {
+		panic("")
 	})
 
 	app.Use(router.Routes())
@@ -186,6 +209,23 @@ func TestJSON(t *testing.T) {
 	}
 }
 
+func TestXMLrror(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/xmlerror")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "xml: unsupported type: []uint8" {
+		t.Error("xmlError error")
+	}
+}
+
 func TestXML(t *testing.T) {
 	server := initServer()
 	defer server.Close()
@@ -225,6 +265,23 @@ func TestKeys(t *testing.T) {
 	}
 }
 
+func TestKeysFail(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/keys2")
+
+	if err != nil {
+		t.Error("keys error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "key does not exist" && resp.StatusCode == 500 {
+		t.Error("keys error")
+	}
+}
+
 func TestQuery(t *testing.T) {
 	server := initServer()
 	defer server.Close()
@@ -236,7 +293,7 @@ func TestQuery(t *testing.T) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != "hello nicholascao" {
+	if string(body) != "hello nicholascao," {
 		t.Error("request error")
 	}
 }
@@ -288,5 +345,39 @@ func TestError(t *testing.T) {
 
 	if string(body) != "msg" && resp.StatusCode != 500 {
 		t.Error("onerror error")
+	}
+}
+
+func TestStringError(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/stringerror")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "error" && resp.StatusCode != 500 {
+		t.Error("stringError error")
+	}
+}
+
+func TestEmptyError(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/emptyerror")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "Internal Server Error" && resp.StatusCode != 500 {
+		t.Error("emptyError error")
 	}
 }
