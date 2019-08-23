@@ -9,10 +9,10 @@ import (
 type String struct{}
 
 // Parse string-data.
-func (p String) Parse(req *http.Request) string {
+func (p String) Parse(req *http.Request) (string, error) {
 	b, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	return string(b), err
 }

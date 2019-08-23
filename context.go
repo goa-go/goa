@@ -140,27 +140,39 @@ func (ps Params) Get(name string) string {
 }
 
 // Parse handles parser.
-func (c *Context) Parse(p parser.Parser) {
-	if err := p.Parse(c.Request); err != nil {
-		panic(err)
-	}
+func (c *Context) Parse(p parser.Parser) error {
+	return p.Parse(c.Request)
 }
 
 // ParseJSON parses json-data, require a pointer.
-func (c *Context) ParseJSON(pointer interface{}) {
-	c.Parse(parser.JSON{Pointer: pointer})
+func (c *Context) ParseJSON(pointer interface{}) error {
+	return c.Parse(parser.JSON{Pointer: pointer})
 }
 
 // ParseXML parses xml-data, require a pointer.
-func (c *Context) ParseXML(pointer interface{}) {
-	c.Parse(parser.XML{Pointer: pointer})
+func (c *Context) ParseXML(pointer interface{}) error {
+	return c.Parse(parser.XML{Pointer: pointer})
 }
 
 // ParseString returns string-data
-func (c *Context) ParseString() string {
-	str := parser.String{}.Parse(c.Request)
+func (c *Context) ParseString() (string, error) {
+	return parser.String{}.Parse(c.Request)
+}
 
-	return str
+// ParseForm can parse form-data and x-www-form-urlencoded,
+// the latter is not available when the request method is get,
+// require a pointer.
+// Just like json, it also needs a "form" tag. Here is a example.
+//
+// type Person struct {
+// 	Name string `form:"name"`
+// 	Age  int    `form:"age"`
+// }
+//
+// p := &Person{}
+// c.ParseForm(p)
+func (c *Context) ParseForm(pointer interface{}) error {
+	return c.Parse(parser.Form{Pointer: pointer})
 }
 
 /* handle response */
