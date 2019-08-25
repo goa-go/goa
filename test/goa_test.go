@@ -381,3 +381,15 @@ func TestEmptyError(t *testing.T) {
 		t.Error("emptyError error")
 	}
 }
+
+func TestListen(t *testing.T) {
+	app := goa.New()
+	var err error
+	go func() {
+		err = app.Listen(":3000")
+	}()
+
+	if err != nil {
+		t.Error("listen error")
+	}
+}
