@@ -1,10 +1,22 @@
-0.2.0 / 2019-8-18
+0.2.1 / 2019-08-25
+==================
+**feat**
+  - add c.ParseQuery
+  - add c.ParseForm
+
+**feat**
+  - add context.Body `c.Body = ...`
+  - add error handling
+  - add support of html
+
+0.2.0 / 2019-08-18
 ==================
 
 **feat**
   - add context.Body `c.Body = ...`
   - add error handling
   - add support of html
+  - add parser
 
 0.1.1 / 2019-08-09
 ==================

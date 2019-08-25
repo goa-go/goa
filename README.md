@@ -11,7 +11,7 @@ Goa is under construction, if you are familiar with [koa](https://github.com/koa
 ## What is goa?
 goa = go + [koa](https://github.com/koajs/koa)
 
-Just like koa, goa is also not bundled with any middleware. But you can expand functionality to meet your needs at will by middlware. It is flexible, light and extensible.
+Just like koa, goa is also not bundled with any middleware. But you can expand functionality to meet your needs at will by middlware. It is flexible, light, high-performance and extensible.
 
 ## Installation
 
