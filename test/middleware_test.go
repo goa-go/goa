@@ -3,14 +3,16 @@ package goa_test
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/goa-go/goa"
 )
 
-func TestMiddleware(t *testing.T) {
+var calls = []int{}
+
+func testMiddlewareServer() *httptest.Server {
 	app := goa.New()
-	calls := []int{}
 
 	app.Use(func(c *goa.Context, next func()) {
 		calls = append(calls, 1)
@@ -30,9 +32,16 @@ func TestMiddleware(t *testing.T) {
 		calls = append(calls, 4)
 	})
 
-	go app.Listen(":3000")
+	// Before testing, must compose middlewares.
+	app.ComposeMiddlewares()
+	return httptest.NewServer(app)
+}
 
-	http.Get("http://localhost:3000")
+func TestMiddleware(t *testing.T) {
+	server := testMiddlewareServer()
+	defer server.Close()
+
+	http.Get(server.URL)
 
 	if len(calls) != 6 {
 		fmt.Println(calls)
