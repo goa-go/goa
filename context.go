@@ -159,6 +159,20 @@ func (c *Context) ParseString() (string, error) {
 	return parser.String{}.Parse(c.Request)
 }
 
+// ParseQuery can parse query, require a pointer.
+// Just like json, it also needs a "query" tag. Here is a example.
+//
+// type Person struct {
+// 	Name string `query:"name"`
+// 	Age  int    `query:"age"`
+// }
+//
+// p := &Person{}
+// c.ParseQuery(p)
+func (c *Context) ParseQuery(pointer interface{}) error {
+	return c.Parse(parser.Query{Pointer: pointer})
+}
+
 // ParseForm can parse form-data and x-www-form-urlencoded,
 // the latter is not available when the request method is get,
 // require a pointer.
