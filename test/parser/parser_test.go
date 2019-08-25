@@ -21,10 +21,10 @@ type Address struct {
 	City, Country string
 }
 type Person struct {
-	Id        int     `xml:"id,attr"`
-	FirstName string  `xml:"name>first"`
-	LastName  string  `xml:"name>last"`
-	Age       int     `xml:"age"`
+	Id        int     `xml:"id,attr" query:"id"`
+	FirstName string  `xml:"name>first" query:"firstName"`
+	LastName  string  `xml:"name>last" query:"lastName"`
+	Age       int     `xml:"age" query:"age"`
 	Height    float32 `xml:"height,omitempty" json:"height,omitempty"`
 	Married   bool
 	Address
@@ -177,6 +177,14 @@ func initServer(t *testing.T) *httptest.Server {
 		err := c.ParseForm(&f)
 		if err == nil {
 			t.Error("parse form-float-slice-fail error")
+		}
+	})
+
+	router.GET("/query", func(c *goa.Context) {
+		p := Person{}
+		c.ParseQuery(&p)
+		if p.Id != 1 || p.FirstName != "Nicholas" || p.LastName != "Cao" || p.Age != 18 {
+			t.Error("parse query error")
 		}
 	})
 
@@ -375,4 +383,16 @@ func TestFormFail6(t *testing.T) {
 	if err == nil {
 		t.Error("fail to let req.ParseMultipartForm err")
 	}
+}
+
+func TestQuery(t *testing.T) {
+	server := initServer(t)
+
+	resp, err := http.Get(server.URL + "/query?id=1&firstName=Nicholas&lastName=Cao&age=18")
+
+	if err != nil {
+		t.Error("request error")
+	}
+
+	defer resp.Body.Close()
 }
