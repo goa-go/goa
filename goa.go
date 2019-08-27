@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sync"
 
 	"github.com/goa-go/goa/responser"
 	"github.com/pkg/errors"
@@ -25,18 +26,27 @@ type middlewareHandler func(*Context)
 type Goa struct {
 	middlewares Middlewares
 
+	pool              sync.Pool
 	Context           *Context
 	middlewareHandler middlewareHandler
 }
 
 // New returns the initialized Goa instance.
 func New() *Goa {
-	return &Goa{}
+	app := &Goa{}
+	app.pool.New = func() interface{} {
+		return &Context{}
+	}
+	return app
 }
 
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	app.Context = createContext(w, r)
+	c := app.pool.Get().(*Context)
+	app.Context = initContext(c, w, r)
+
 	app.handleRequest(app.Context, app.middlewareHandler)
+
+	app.pool.Put(c)
 }
 
 // Use a middleware.
@@ -145,7 +155,8 @@ func (app *Goa) onerror(err interface{}) {
 
 	c.Type = "text/plain; charset=utf-8"
 	c.SetHeader("Content-Type", c.Type)
-	c.status(c.errorStatusCode)
+	c.Status = c.errorStatusCode
+	c.status(c.Status)
 	if errResponse != nil && errResponse != "" {
 		fmt.Fprint(c.ResponseWriter, errResponse)
 	} else {

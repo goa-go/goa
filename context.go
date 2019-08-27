@@ -55,17 +55,15 @@ type Context struct {
 	responser responser.Responser
 }
 
-func createContext(w http.ResponseWriter, r *http.Request) *Context {
-
-	return &Context{
-		Request:         r,
-		ResponseWriter:  w,
-		Method:          r.Method,
-		URL:             r.URL,
-		Path:            r.URL.Path,
-		Header:          r.Header,
-		errorStatusCode: 500,
-	}
+func initContext(c *Context, w http.ResponseWriter, r *http.Request) *Context {
+	c.Request = r
+	c.ResponseWriter = w
+	c.Method = r.Method
+	c.URL = r.URL
+	c.Path = r.URL.Path
+	c.Header = r.Header
+	c.errorStatusCode = 500
+	return c
 }
 
 // Set value.
