@@ -209,7 +209,7 @@ func TestJSON(t *testing.T) {
 	}
 }
 
-func TestXMLrror(t *testing.T) {
+func TestXMLerror(t *testing.T) {
 	server := initServer()
 	defer server.Close()
 
@@ -327,7 +327,8 @@ func TestRedirect(t *testing.T) {
 	defer resp.Body.Close()
 	b, _ := ioutil.ReadAll(resp.Body)
 	if string(b) != "hello world" {
-		t.Error("redirect error")
+		fmt.Println(string(b))
+		t.Error("redirect error"+string(b), resp.StatusCode)
 	}
 }
 
