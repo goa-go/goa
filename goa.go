@@ -27,7 +27,6 @@ type Goa struct {
 	middlewares Middlewares
 
 	pool              sync.Pool
-	Context           *Context
 	middlewareHandler middlewareHandler
 }
 
@@ -42,9 +41,9 @@ func New() *Goa {
 
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := app.pool.Get().(*Context)
-	app.Context = initContext(c, w, r)
+	c.init(w, r)
 
-	app.handleRequest(app.Context, app.middlewareHandler)
+	app.handleRequest(c)
 
 	app.pool.Put(c)
 }
@@ -67,9 +66,10 @@ func (app *Goa) Listen(addr string) error {
 	return http.ListenAndServe(addr, app)
 }
 
+var dispatch func(i int)
+
 func compose(m Middlewares) middlewareHandler {
 	return func(c *Context) {
-		var dispatch func(int)
 		dispatch = func(i int) {
 			if i == len(m) {
 				return
@@ -79,19 +79,18 @@ func compose(m Middlewares) middlewareHandler {
 				dispatch(i + 1)
 			})
 		}
-
 		dispatch(0)
 	}
 }
 
-func (app *Goa) handleRequest(c *Context, fn middlewareHandler) {
+func (app *Goa) handleRequest(c *Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			app.onerror(err)
+			app.onerror(c, err)
 		}
 	}()
 
-	fn(c)
+	app.middlewareHandler(c)
 	if !c.redirected {
 		app.handleResponse(c)
 	}
@@ -117,7 +116,8 @@ func (app *Goa) handleResponse(c *Context) {
 
 	// Content-Type
 	if c.Type != "" {
-		c.SetHeader("Content-Type", c.Type)
+		// c.SetHeader("Content-Type", c.Type)
+		c.writeContentType(c.Type)
 	}
 
 	// Status code
@@ -137,9 +137,7 @@ func (app *Goa) handleResponse(c *Context) {
 	}
 }
 
-func (app *Goa) onerror(err interface{}) {
-	c := app.Context
-
+func (app *Goa) onerror(c *Context, err interface{}) {
 	var errResponse interface{}
 
 	if e, ok := err.(Error); ok {

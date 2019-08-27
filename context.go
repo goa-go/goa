@@ -55,7 +55,7 @@ type Context struct {
 	responser responser.Responser
 }
 
-func initContext(c *Context, w http.ResponseWriter, r *http.Request) *Context {
+func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.Request = r
 	c.ResponseWriter = w
 	c.Method = r.Method
@@ -63,7 +63,9 @@ func initContext(c *Context, w http.ResponseWriter, r *http.Request) *Context {
 	c.Path = r.URL.Path
 	c.Header = r.Header
 	c.errorStatusCode = 500
-	return c
+
+	c.Keys = nil
+	c.queryMap = nil
 }
 
 // Set value.
@@ -241,6 +243,13 @@ func (c *Context) Redirect(code int, url string) {
 // It should be called before Status and Respond.
 func (c *Context) SetHeader(key string, value string) {
 	c.ResponseWriter.Header().Set(key, value)
+}
+
+func (c *Context) writeContentType(value string) {
+	header := c.ResponseWriter.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = []string{value}
+	}
 }
 
 // Error is used like c.Error(goa.Error{...}).
