@@ -116,7 +116,6 @@ func (app *Goa) handleResponse(c *Context) {
 
 	// Content-Type
 	if c.Type != "" {
-		// c.SetHeader("Content-Type", c.Type)
 		c.writeContentType(c.Type)
 	}
 
@@ -152,7 +151,7 @@ func (app *Goa) onerror(c *Context, err interface{}) {
 	}
 
 	c.Type = "text/plain; charset=utf-8"
-	c.SetHeader("Content-Type", c.Type)
+	c.writeContentType(c.Type)
 	c.Status = c.errorStatusCode
 	c.status(c.Status)
 	if errResponse != nil && errResponse != "" {
