@@ -74,7 +74,7 @@ func initServer(t *testing.T) *httptest.Server {
 	router.POST("/jsonfail", func(c *goa.Context) {
 		obj := Person{}
 		e := c.ParseJSON(&obj)
-		if e.Error() != `readObjectStart: expect { or n, but found j, error found in #1 byte of ...|json|..., bigger context ...|json|...` {
+		if e.Error() != `invalid character 'j' looking for beginning of value` {
 			t.Error("json fail error")
 		}
 	})

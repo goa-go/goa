@@ -327,8 +327,7 @@ func TestRedirect(t *testing.T) {
 	defer resp.Body.Close()
 	b, _ := ioutil.ReadAll(resp.Body)
 	if string(b) != "hello world" {
-		fmt.Println(string(b))
-		t.Error("redirect error"+string(b), resp.StatusCode)
+		t.Error("redirect error")
 	}
 }
 
