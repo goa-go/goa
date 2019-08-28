@@ -2,6 +2,7 @@
 package body_test
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/goa-go/goa"
 	"github.com/goa-go/goa/router"
-	json "github.com/json-iterator/go"
 )
 
 // json test case

@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"github.com/goa-go/goa"
 	"github.com/goa-go/goa/parser"
 	"github.com/goa-go/goa/router"
-	json "github.com/json-iterator/go"
 )
 
 // xml and json test case

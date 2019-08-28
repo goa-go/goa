@@ -1,6 +1,7 @@
 package goa_test
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/goa-go/goa"
 	"github.com/goa-go/goa/router"
-	json "github.com/json-iterator/go"
 )
 
 // xml and json test case
