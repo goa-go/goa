@@ -203,8 +203,8 @@ func (c *Context) status(code int) {
 // Use is as c.JSON(&goa.M{...})
 type M map[string]interface{}
 
-func (c *Context) respond(r responser.Responser) {
-	if err := r.Respond(c.ResponseWriter); err != nil {
+func (c *Context) respond() {
+	if err := c.responser.Respond(c.ResponseWriter); err != nil {
 		panic(err)
 	}
 }

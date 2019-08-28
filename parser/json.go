@@ -1,9 +1,8 @@
 package parser
 
 import (
+	"encoding/json"
 	"net/http"
-
-	json "github.com/json-iterator/go"
 )
 
 // JSON is a json-parser instance.

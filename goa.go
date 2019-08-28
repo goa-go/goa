@@ -131,8 +131,7 @@ func (app *Goa) handleResponse(c *Context) {
 
 	// Response
 	if c.responser != nil {
-		c.respond(c.responser)
-		return
+		c.respond()
 	}
 }
 
