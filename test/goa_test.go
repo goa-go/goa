@@ -115,6 +115,9 @@ func initServer() *httptest.Server {
 	router.GET("/emptyerror", func(c *goa.Context) {
 		panic("")
 	})
+	router.GET("/header", func(c *goa.Context) {
+		c.SetHeader("Goa-Header", "test")
+	})
 
 	app.Use(router.Routes())
 
@@ -379,6 +382,21 @@ func TestEmptyError(t *testing.T) {
 
 	if string(body) != "Internal Server Error" && resp.StatusCode != 500 {
 		t.Error("emptyError error")
+	}
+}
+
+func TestHeader(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/header")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	if resp.Header["Goa-Header"][0] != "test" {
+		t.Error("header error")
 	}
 }
 
