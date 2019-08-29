@@ -1,7 +1,7 @@
 # Goa
 
-[![CI](https://img.shields.io/travis/goa-go/goa.svg?style=flat)](https://travis-ci.org/goa-go/goa)
-[![Codecov](https://img.shields.io/codecov/c/github/goa-go/goa.svg?style=flat)](https://codecov.io/github/goa-go/goa?branch=master)
+[![Build Status](https://travis-ci.org/goa-go/goa.svg?branch=master)](https://travis-ci.org/goa-go/goa)
+[![Codecov](https://codecov.io/gh/goa-go/goa/branch/master/graph/badge.svg)](https://codecov.io/github/goa-go/goa?branch=master)
 [![Go Doc](https://godoc.org/github.com/goa-go/goa?status.svg)](http://godoc.org/github.com/goa-go/goa)
 [![Go Report](https://goreportcard.com/badge/github.com/goa-go/goa)](https://goreportcard.com/report/github.com/goa-go/goa)
 [![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/goa-go/goa/pull/new)

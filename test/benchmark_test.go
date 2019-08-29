@@ -7,6 +7,8 @@ import (
 	"github.com/goa-go/goa"
 )
 
+// BenchmarkGoa-4   	 5000000	       216 ns/op	      64 B/op	       2 allocs/op
+
 func BenchmarkGoa(b *testing.B) {
 	app := goa.New()
 	app.Use(func(c *goa.Context, next func()) {
