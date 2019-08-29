@@ -62,11 +62,16 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.URL = r.URL
 	c.Path = r.URL.Path
 	c.Header = r.Header
+	c.Status = 0
 	c.errorStatusCode = 500
 
+	c.Params = nil
 	c.Keys = nil
 	c.queryMap = nil
+	c.Type = ""
 	c.redirected = false
+	c.responser = nil
+	c.Body = nil
 }
 
 // Set value.
