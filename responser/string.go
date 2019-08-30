@@ -3,7 +3,7 @@ package responser
 import (
 	"net/http"
 
-	"github.com/goa-go/goa/util"
+	"github.com/goa-go/goa/utils"
 )
 
 // String is a string-responser instance.
@@ -13,6 +13,6 @@ type String struct {
 
 // Respond string-data.(text/html)
 func (r String) Respond(w http.ResponseWriter) error {
-	_, err := w.Write(util.Str2bytes(r.Data))
+	_, err := w.Write(utils.Str2bytes(r.Data))
 	return err
 }
