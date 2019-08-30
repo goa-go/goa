@@ -79,7 +79,7 @@ func (n *node) incrementChildPrio(pos int) int {
 
 // addRoute adds a node with the given handler to the path.
 // Not concurrency-safe!
-func (n *node) addRoute(path string, handler Handler) {
+func (n *node) addRoute(path string, handler Handler) *node {
 	fullPath := path
 	n.priority++
 	numParams := countParams(path)
@@ -195,7 +195,7 @@ func (n *node) addRoute(path string, handler Handler) {
 					n = child
 				}
 				n.insertChild(numParams, path, fullPath, handler)
-				return
+				return n
 
 			} else if i == len(path) { // Make node a (in-path) leaf
 				if n.handler != nil {
@@ -203,13 +203,24 @@ func (n *node) addRoute(path string, handler Handler) {
 				}
 				n.handler = handler
 			}
-			return
+			return n
 		}
 	} else { // Empty tree
 		n.insertChild(numParams, path, fullPath, handler)
 		n.nType = root
+		return n
 	}
 }
+
+// todo
+// func (n *node) Use(m goa.Middleware) {
+// 	handler := n.handler
+
+// 	n.handler = func(c *goa.Context) {
+// 		m(c, func() {})
+// 		handler(c)
+// 	}
+// }
 
 func (n *node) insertChild(numParams uint8, path, fullPath string, handler Handler) {
 	var offset int // already handled bytes of the path

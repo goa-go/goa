@@ -15,7 +15,8 @@ type Handler func(*goa.Context)
 // Router is a http.Handler which can be used to dispatch requests to different
 // handler functions via configurable routes
 type Router struct {
-	trees map[string]*node
+	trees    map[string]*node
+	basePath string
 
 	// Enables automatic redirection if the current route can't be matched but a
 	// handler for the path with (without) the trailing slash exists.
@@ -49,7 +50,7 @@ type Router struct {
 
 	// Configurable http.Handler which is called when no matching route is
 	// found. If it is not set, http.NotFound is used.
-	NotFound http.Handler
+	NotFound Handler
 
 	// Configurable http.Handler which is called when a request
 	// cannot be routed and HandleMethodNotAllowed is true.
@@ -58,12 +59,8 @@ type Router struct {
 	// is called.
 	MethodNotAllowed http.Handler
 
-	// Function to handler panics recovered from http handlers.
-	// It should be used to generate a error page and return the http error code
-	// 500 (Internal Server Error).
-	// The handler can be used to keep your server from crashing because of
-	// unrecovered panics.
-	PanicHandler func(http.ResponseWriter, *http.Request, interface{})
+	// All allow methods
+	Methods []string
 }
 
 // Make sure the Router conforms with the http.Handler interface
@@ -77,45 +74,65 @@ func New() *Router {
 		RedirectFixedPath:      true,
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
+		Methods:                []string{"GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"},
 	}
 }
 
-// GET is a shortcut for router.Handler("GET", path, handler)
-func (r *Router) GET(path string, handler Handler) {
-	r.Handle("GET", path, handler)
+// GET is a shortcut for router.Register("GET", path, handler)
+func (r *Router) GET(path string, handler Handler) *node {
+	return r.Register("GET", path, handler)
 }
 
-// HEAD is a shortcut for router.Handler("HEAD", path, handler)
-func (r *Router) HEAD(path string, handler Handler) {
-	r.Handle("HEAD", path, handler)
+// HEAD is a shortcut for router.Register("HEAD", path, handler)
+func (r *Router) HEAD(path string, handler Handler) *node {
+	return r.Register("HEAD", path, handler)
 }
 
-// OPTIONS is a shortcut for router.Handler("OPTIONS", path, handler)
-func (r *Router) OPTIONS(path string, handler Handler) {
-	r.Handle("OPTIONS", path, handler)
+// OPTIONS is a shortcut for router.Register("OPTIONS", path, handler)
+func (r *Router) OPTIONS(path string, handler Handler) *node {
+	return r.Register("OPTIONS", path, handler)
 }
 
-// POST is a shortcut for router.Handler("POST", path, handler)
-func (r *Router) POST(path string, handler Handler) {
-	r.Handle("POST", path, handler)
+// POST is a shortcut for router.Register("POST", path, handler)
+func (r *Router) POST(path string, handler Handler) *node {
+	return r.Register("POST", path, handler)
 }
 
-// PUT is a shortcut for router.Handler("PUT", path, handler)
-func (r *Router) PUT(path string, handler Handler) {
-	r.Handle("PUT", path, handler)
+// PUT is a shortcut for router.Register("PUT", path, handler)
+func (r *Router) PUT(path string, handler Handler) *node {
+	return r.Register("PUT", path, handler)
 }
 
-// PATCH is a shortcut for router.Handler("PATCH", path, handler)
-func (r *Router) PATCH(path string, handler Handler) {
-	r.Handle("PATCH", path, handler)
+// PATCH is a shortcut for router.Register("PATCH", path, handler)
+func (r *Router) PATCH(path string, handler Handler) *node {
+	return r.Register("PATCH", path, handler)
 }
 
-// DELETE is a shortcut for router.Handler("DELETE", path, handler)
-func (r *Router) DELETE(path string, handler Handler) {
-	r.Handle("DELETE", path, handler)
+// DELETE is a shortcut for router.Register("DELETE", path, handler)
+func (r *Router) DELETE(path string, handler Handler) *node {
+	return r.Register("DELETE", path, handler)
 }
 
-// Handle registers a new request handle with the given path and method.
+// All registers all allow mothods, but doesn't not return *node.
+func (r *Router) All(path string, handler Handler) {
+	for _, method := range r.Methods {
+		r.Register(method, path, handler)
+	}
+}
+
+// Group registers a router group.
+// For example,
+// r := router.New()
+// apiRouter := router.New()
+// apiRouter.GET(...)
+// r.Group("/api", apiRouter)
+//
+func (r *Router) Group(basePath string, router *Router) {
+	router.basePath = basePath
+	r.All(basePath+"/:routerGroupPath", router.Handle)
+}
+
+// Register registers a new request handle with the given path and method.
 //
 // For GET, POST, PUT, PATCH and DELETE requests the respective shortcut
 // functions can be used.
@@ -123,7 +140,7 @@ func (r *Router) DELETE(path string, handler Handler) {
 // This function is intended for bulk loading and to allow the usage of less
 // frequently used, non-standardized or custom methods (e.g. for internal
 // communication with a proxy).
-func (r *Router) Handle(method, path string, handle Handler) {
+func (r *Router) Register(method, path string, handle Handler) *node {
 	if path[0] != '/' {
 		panic("path must begin with '/' in path '" + path + "'")
 	}
@@ -138,13 +155,7 @@ func (r *Router) Handle(method, path string, handle Handler) {
 		r.trees[method] = root
 	}
 
-	root.addRoute(path, handle)
-}
-
-func (r *Router) recv(w http.ResponseWriter, req *http.Request) {
-	if rcv := recover(); rcv != nil {
-		r.PanicHandler(w, req, rcv)
-	}
+	return root.addRoute(path, handle)
 }
 
 func (r *Router) allowed(path, reqMethod string) (allow string) {
@@ -185,84 +196,86 @@ func (r *Router) allowed(path, reqMethod string) (allow string) {
 	return
 }
 
-// ServeHTTP makes the router implement the http.Handler interface.
-func (r *Router) Routes() goa.Middleware {
-	return func(c *goa.Context, next func()) {
-		if r.PanicHandler != nil {
-			defer r.recv(c.ResponseWriter, c.Request)
-		}
+// Handle is goa-router's handle function.
+func (r *Router) Handle(c *goa.Context) {
+	path := c.Path
 
-		path := c.Path
+	if r.basePath != "" {
+		path = path[len(r.basePath):]
+	}
 
-		if root := r.trees[c.Method]; root != nil {
-			if Handler, ps, tsr := root.getValue(path); Handler != nil {
-				c.Params = ps
-				Handler(c)
-				return
-			} else if c.Method != "CONNECT" && path != "/" {
-				code := 301 // Permanent redirect, request with GET method
-				if c.Method != "GET" {
-					// Temporary redirect, request with same method
-					// As of Go 1.3, Go does not support status code 308.
-					code = 307
+	if root := r.trees[c.Method]; root != nil {
+		if Handler, ps, tsr := root.getValue(path); Handler != nil {
+			c.Params = ps
+			Handler(c)
+			return
+		} else if c.Method != "CONNECT" && path != "/" {
+			code := 301 // Permanent redirect, request with GET method
+			if c.Method != "GET" {
+				// Temporary redirect, request with same method
+				// As of Go 1.3, Go does not support status code 308.
+				code = 307
+			}
+
+			if tsr && r.RedirectTrailingSlash {
+				if len(path) > 1 && path[len(path)-1] == '/' {
+					c.URL.Path = path[:len(path)-1]
+					c.Path = path[:len(path)-1]
+				} else {
+					c.URL.Path = path + "/"
+					c.Path = path + "/"
 				}
+				c.Redirect(code, c.URL.String())
+				return
+			}
 
-				if tsr && r.RedirectTrailingSlash {
-					if len(path) > 1 && path[len(path)-1] == '/' {
-						c.Path = path[:len(path)-1]
-					} else {
-						c.Path = path + "/"
-					}
+			// Try to fix the request path
+			if r.RedirectFixedPath {
+				fixedPath, found := root.findCaseInsensitivePath(
+					CleanPath(path),
+					r.RedirectTrailingSlash,
+				)
+				if found {
+					c.Path = string(fixedPath)
 					c.Redirect(code, c.URL.String())
 					return
 				}
-
-				// Try to fix the request path
-				if r.RedirectFixedPath {
-					fixedPath, found := root.findCaseInsensitivePath(
-						CleanPath(path),
-						r.RedirectTrailingSlash,
-					)
-					if found {
-						c.Path = string(fixedPath)
-						c.Redirect(code, c.URL.String())
-						return
-					}
-				}
 			}
 		}
+	}
 
-		if c.Method == "OPTIONS" && r.HandleOPTIONS {
-			// Handle OPTIONS requests
+	if c.Method == "OPTIONS" && r.HandleOPTIONS {
+		// Handle OPTIONS requests
+		if allow := r.allowed(path, c.Method); len(allow) > 0 {
+			c.ResponseWriter.Header().Set("Allow", allow)
+			return
+		}
+	} else {
+		// Handle 405
+		if r.HandleMethodNotAllowed {
 			if allow := r.allowed(path, c.Method); len(allow) > 0 {
 				c.ResponseWriter.Header().Set("Allow", allow)
+				if r.MethodNotAllowed != nil {
+					r.MethodNotAllowed.ServeHTTP(c.ResponseWriter, c.Request)
+				} else {
+					c.Error(http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed))
+				}
 				return
 			}
-		} else {
-			// Handle 405
-			if r.HandleMethodNotAllowed {
-				if allow := r.allowed(path, c.Method); len(allow) > 0 {
-					c.ResponseWriter.Header().Set("Allow", allow)
-					if r.MethodNotAllowed != nil {
-						r.MethodNotAllowed.ServeHTTP(c.ResponseWriter, c.Request)
-					} else {
-						http.Error(c.ResponseWriter,
-							http.StatusText(http.StatusMethodNotAllowed),
-							http.StatusMethodNotAllowed,
-						)
-					}
-					return
-				}
-			}
 		}
+	}
 
-		// Handle 404
-		if r.NotFound != nil {
-			r.NotFound.ServeHTTP(c.ResponseWriter, c.Request)
-		} else {
-			http.NotFound(c.ResponseWriter, c.Request)
-		}
+	// Handle 404
+	if r.NotFound != nil {
+		r.NotFound(c)
+	}
+}
 
+// Routes returns a goa.Middleware.
+// app.Use(router.Routes())
+func (r *Router) Routes() goa.Middleware {
+	return func(c *goa.Context, next func()) {
+		r.Handle(c)
 		next()
 	}
 }
