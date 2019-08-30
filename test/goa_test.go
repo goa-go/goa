@@ -52,10 +52,10 @@ func setStatus(c *goa.Context) {
 	}
 	int, err := strconv.Atoi(code)
 	if err != nil {
-		c.Status = 400
+		c.Status(400)
 		c.String("plz input int")
 	} else {
-		c.Status = int
+		c.Status(int)
 		c.String("ok")
 	}
 }
@@ -97,23 +97,23 @@ func initServer() *httptest.Server {
 	router.GET("/keys2", func(c *goa.Context) {
 		v2, _ := c.Get("key2")
 		if v2 == nil {
-			c.Error(goa.Error{
-				Msg:    "key does not exist",
-				Status: 500,
-			})
+			c.Error(500, "key does not exist")
 		}
 	})
 	router.GET("/status/:code", setStatus)
 	router.GET("/hello", hello)
 	router.POST("/postForm", postForm)
 	router.GET("/error", func(c *goa.Context) {
-		c.Error(goa.Error{Msg: "msg"})
+		c.Error(500, "msg")
 	})
 	router.GET("/stringerror", func(c *goa.Context) {
 		panic("error")
 	})
 	router.GET("/emptyerror", func(c *goa.Context) {
 		panic("")
+	})
+	router.GET("/interror", func(c *goa.Context) {
+		panic(1)
 	})
 	router.GET("/header", func(c *goa.Context) {
 		c.SetHeader("Goa-Header", "test")
@@ -138,7 +138,7 @@ func TestRequest(t *testing.T) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != "hello world" {
+	if string(body) != "hello world" && resp.StatusCode == 200 {
 		t.Error("request error")
 	}
 }
@@ -224,7 +224,7 @@ func TestXMLerror(t *testing.T) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	if string(body) != "xml: unsupported type: []uint8" {
+	if string(body) != http.StatusText(500) {
 		t.Error("xmlError error")
 	}
 }
@@ -382,6 +382,23 @@ func TestEmptyError(t *testing.T) {
 
 	if string(body) != "Internal Server Error" && resp.StatusCode != 500 {
 		t.Error("emptyError error")
+	}
+}
+
+func TestIntError(t *testing.T) {
+	server := initServer()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/interror")
+
+	if err != nil {
+		t.Error("request error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if string(body) != "Internal Server Error" && resp.StatusCode != 500 {
+		t.Error("intError error")
 	}
 }
 

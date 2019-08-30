@@ -1,11 +1,8 @@
 package goa
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"reflect"
-	"regexp"
 	"sync"
 
 	"github.com/goa-go/goa/responser"
@@ -39,6 +36,7 @@ func New() *Goa {
 	return app
 }
 
+// ServeHTTP makes the router implement the http.Handler interface.
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := app.pool.Get().(*Context)
 	c.init(w, r)
@@ -97,22 +95,6 @@ func (app *Goa) handleRequest(c *Context) {
 }
 
 func (app *Goa) handleResponse(c *Context) {
-	body := c.Body
-
-	// handle body
-	if body != nil {
-		if str, ok := body.(string); ok {
-			if match, _ := regexp.MatchString(`^\s*<`, str); match {
-				c.Type = "text/html; charset=utf-8"
-			} else {
-				c.Type = "text/plain; charset=utf-8"
-			}
-			c.responser = responser.String{Data: str}
-		} else if reflect.TypeOf(body).Kind() == reflect.Struct || reflect.TypeOf(body).Kind() == reflect.Map {
-			c.Type = "application/json; charset=utf-8"
-			c.responser = responser.JSON{Data: body}
-		}
-	}
 
 	// Content-Type
 	if c.Type != "" {
@@ -120,42 +102,40 @@ func (app *Goa) handleResponse(c *Context) {
 	}
 
 	// Status code
-	if c.Status == 0 {
-		if c.responser == nil && body == nil {
-			c.Status = 404
-		} else {
-			c.Status = 200
-		}
-	}
-	c.status(c.Status)
+	c.ResponseWriter.WriteHeader(c.status)
 
 	// Response
-	if c.responser != nil {
-		c.respond()
+	if c.responser == nil {
+		c.String(http.StatusText(c.status))
+	}
+
+	if err := c.respond(c.responser); err != nil {
+		log.Printf("[ERROR] %+v", errors.WithStack(err))
+		c.respond(responser.String{Data: http.StatusText(http.StatusInternalServerError)})
 	}
 }
 
 func (app *Goa) onerror(c *Context, err interface{}) {
-	var errResponse interface{}
+	code := http.StatusInternalServerError
+	msg := http.StatusText(http.StatusInternalServerError)
 
 	if e, ok := err.(Error); ok {
-		c.errorStatusCode = e.Status
-		errResponse = e.Msg
+		code = e.Code
+		msg = e.Msg
 	} else if e, ok := err.(error); ok {
 		log.Printf("[ERROR] %+v", errors.WithStack(e))
-		errResponse = e.Error()
+		msg = e.Error()
+	} else if str, ok := err.(string); ok {
+		log.Print("[ERROR] ", str)
+		msg = str
 	} else {
 		log.Print("[ERROR] ", err)
-		errResponse = err
 	}
 
 	c.Type = "text/plain; charset=utf-8"
 	c.writeContentType(c.Type)
-	c.Status = c.errorStatusCode
-	c.status(c.Status)
-	if errResponse != nil && errResponse != "" {
-		fmt.Fprint(c.ResponseWriter, errResponse)
-	} else {
-		fmt.Fprint(c.ResponseWriter, "Internal Server Error")
-	}
+	c.SetHeader("X-Content-Type-Options", "nosniff")
+
+	c.ResponseWriter.WriteHeader(code)
+	c.respond(responser.String{Data: msg})
 }

@@ -34,23 +34,13 @@ type Context struct {
 	Params   Params
 	Keys     map[string]interface{}
 
-	// Response status code.
-	Status int
-
-	// Error Status code.
-	errorStatusCode int
+	status         int
+	explicitStatus bool
 
 	// Content-Type
 	Type string
 
 	redirected bool
-
-	// Body will be wrote in response,
-	// use it just like `c.Body = ...`.
-	// Only string and struct will be supported.
-	// If body is struct, will parse it as json.
-	// If u want to respond xml or other type data, u can `c.XML(...)` or encode it into string.
-	Body interface{}
 
 	responser responser.Responser
 }
@@ -62,8 +52,8 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.URL = r.URL
 	c.Path = r.URL.Path
 	c.Header = r.Header
-	c.Status = 0
-	c.errorStatusCode = 500
+	c.status = 404
+	c.explicitStatus = false
 
 	c.Params = nil
 	c.Keys = nil
@@ -71,7 +61,6 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.Type = ""
 	c.redirected = false
 	c.responser = nil
-	c.Body = nil
 }
 
 // Set value.
@@ -198,43 +187,58 @@ func (c *Context) ParseForm(pointer interface{}) error {
 /* handle response */
 
 // status sets the HTTP response code.
-func (c *Context) status(code int) {
+func (c *Context) Status(code int) {
 	if code < 100 || code > 999 {
 		panic(fmt.Errorf("invalid status code: %d", code))
 	}
-	c.ResponseWriter.WriteHeader(code)
+	c.explicitStatus = true
+	c.status = code
 }
 
 // M is a convenient alias for a map[string]interface{} map.
 // Use is as c.JSON(&goa.M{...})
 type M map[string]interface{}
 
-func (c *Context) respond() {
-	if err := c.responser.Respond(c.ResponseWriter); err != nil {
-		panic(err)
-	}
+func (c *Context) respond(r responser.Responser) error {
+	return r.Respond(c.ResponseWriter)
 }
 
 // JSON responds json-data.
 func (c *Context) JSON(json interface{}) {
+	if !c.explicitStatus {
+		c.Status(200)
+	}
+
 	c.Type = "application/json; charset=utf-8"
 	c.responser = responser.JSON{Data: json}
 }
 
 // XML responds xml-data.
 func (c *Context) XML(xml interface{}) {
+	if !c.explicitStatus {
+		c.Status(200)
+	}
+
 	c.Type = "application/xml; charset=utf-8"
 	c.responser = responser.XML{Data: xml}
 }
 
 // String responds string-data.
 func (c *Context) String(str string) {
+	if !c.explicitStatus {
+		c.Status(200)
+	}
+
 	c.Type = "text/plain; charset=utf-8"
 	c.responser = responser.String{Data: str}
 }
 
 // HTML responds html.
 func (c *Context) HTML(str string) {
+	if !c.explicitStatus {
+		c.Status(200)
+	}
+
 	c.Type = "text/html; charset=utf-8"
 	c.responser = responser.String{Data: str}
 }
@@ -261,15 +265,14 @@ func (c *Context) writeContentType(value string) {
 // Error is used like c.Error(goa.Error{...}).
 // It will create a http-error.
 type Error struct {
-	Msg    string
-	Status int
+	Code int
+	Msg  string
 }
 
-// Error throw a http-error.
-func (c *Context) Error(err Error) {
-	if err.Status == 0 {
-		err.Status = 500
-	}
-
-	panic(err)
+// Error throw a http-error, it would be catched by goa.
+func (c *Context) Error(code int, msg string) {
+	panic(Error{
+		code,
+		msg,
+	})
 }
