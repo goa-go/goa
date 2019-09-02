@@ -26,7 +26,7 @@ func main() {
   app := goa.New()
 
   app.Use(func(c *goa.Context, next func()) {
-    c.Body = "Hello Goa!"
+    c.String("Hello Goa!")
     next()
   })
   log.Fatal(app.Listen(":3000"))
@@ -73,7 +73,7 @@ func main() {
   router := router.New()
 
   router.GET("/", func(c *goa.Context) {
-    c.Body = "Hello Goa!"
+    c.String("Hello Goa!")
   })
 
   app.Use(logger)
