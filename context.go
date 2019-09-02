@@ -186,13 +186,18 @@ func (c *Context) ParseForm(pointer interface{}) error {
 
 /* handle response */
 
-// status sets the HTTP response code.
+// Status sets the HTTP response code.
 func (c *Context) Status(code int) {
 	if code < 100 || code > 999 {
 		panic(fmt.Errorf("invalid status code: %d", code))
 	}
 	c.explicitStatus = true
 	c.status = code
+}
+
+// GetStatus returns c.status.
+func (c *Context) GetStatus() int {
+	return c.status
 }
 
 // M is a convenient alias for a map[string]interface{} map.

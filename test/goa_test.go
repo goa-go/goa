@@ -56,6 +56,10 @@ func setStatus(c *goa.Context) {
 		c.String("plz input int")
 	} else {
 		c.Status(int)
+		status := c.GetStatus()
+		if status != int {
+			panic("get status error")
+		}
 		c.String("ok")
 	}
 }
