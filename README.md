@@ -9,6 +9,7 @@
 Goa is under construction, if you are familiar with [koa](https://github.com/koajs/koa) or go and interested in this project, please join us.
 
 ## What is goa?
+
 goa = go + [koa](https://github.com/koajs/koa)
 
 Just like koa, goa is also not bundled with any middleware. But you can expand functionality to meet your needs at will by middlware. It is flexible, light, high-performance and extensible.
@@ -16,7 +17,7 @@ Just like koa, goa is also not bundled with any middleware. But you can expand f
 ## Installation
 
 ```bash
-$ go get github.com/goa-go/goa
+$ go get -u github.com/goa-go/goa
 ```
 
 ##  Hello Goa
@@ -53,14 +54,14 @@ func logger(c *goa.Context, next func()) {
 
   fmt.Printf(
     "[%s] <-- %s %s\n",
-    start.Format("2006-6-2 15:04:05"),
+    start.Format("2006-01-02 15:04:05"),
     c.Method,
     c.URL,
   )
   next()
   fmt.Printf(
     "[%s] --> %s %s %d %s\n",
-    time.Now().Format("2006-6-2 15:04:05"),
+    time.Now().Format("2006-01-02 15:04:05"),
     c.Method,
     c.URL,
     time.Since(start).Nanoseconds()/1e6,
@@ -83,6 +84,10 @@ func main() {
 ```
 
 If you are unwilling to use goa-router, you can make a custom router middleware as you like.
+
+## Maintainers
+
+[@NicholasCao](https://github.com/NicholasCao).
 
 ## License
 
