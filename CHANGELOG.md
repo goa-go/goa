@@ -1,13 +1,16 @@
+0.3.0 / 2019-09-03
+==================
+**feat**
+  - optimization error handling
+
+**remove**
+  - remove c.Body
+
 0.2.1 / 2019-08-25
 ==================
 **feat**
   - add c.ParseQuery
   - add c.ParseForm
-
-**feat**
-  - add context.Body `c.Body = ...`
-  - add error handling
-  - add support of html
 
 0.2.0 / 2019-08-18
 ==================
