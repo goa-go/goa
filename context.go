@@ -40,6 +40,8 @@ type Context struct {
 	// Content-Type
 	Type string
 
+	// whether handled response by c.ResponseWriter
+	Handled    bool
 	redirected bool
 
 	responser responser.Responser
@@ -251,6 +253,7 @@ func (c *Context) HTML(str string) {
 // Redirect replies to the request with a redirect to url and a status code.
 func (c *Context) Redirect(code int, url string) {
 	c.redirected = true
+	c.Status(code)
 	http.Redirect(c.ResponseWriter, c.Request, url, code)
 }
 

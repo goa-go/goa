@@ -89,7 +89,7 @@ func (app *Goa) handleRequest(c *Context) {
 	}()
 
 	app.middlewareHandler(c)
-	if !c.redirected {
+	if !c.redirected && !c.Handled {
 		app.handleResponse(c)
 	}
 }
