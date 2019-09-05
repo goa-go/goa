@@ -61,6 +61,7 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.Keys = nil
 	c.queryMap = nil
 	c.Type = ""
+	c.Handled = false
 	c.redirected = false
 	c.responser = nil
 }
