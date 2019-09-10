@@ -158,23 +158,9 @@ func TestRespondError(t *testing.T) {
 func TestListen(t *testing.T) {
 	var err error
 	app := New()
-	app.Use(func(c *Context, next func()) {
-		c.String("Hello Goa!")
-		next()
-	})
-	app.Use(func(c *Context, next func()) {})
 
 	go func() {
 		err = app.Listen(":3000")
 	}()
 	assert.Nil(t, err)
-
-	resp, err := http.Get("http://127.0.0.1:3000")
-	assert.Nil(t, err)
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, "Hello Goa!", string(body))
 }
