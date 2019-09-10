@@ -13,3 +13,6 @@
 
 # Test Server
 server
+
+# Coverage Data
+coverage.txt
