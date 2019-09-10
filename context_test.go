@@ -132,7 +132,7 @@ func TestRespondJSON(t *testing.T) {
 	c.JSON(M{
 		"key": "value",
 	})
-	c.writeContentType(c.Type)
+	c.writeContentType(c.ct)
 	c.ResponseWriter.WriteHeader(c.status)
 	c.respond(c.responser)
 
@@ -146,7 +146,7 @@ func TestRespondXML(t *testing.T) {
 	w := httptest.NewRecorder()
 	c.ResponseWriter = w
 	c.XML(obj{"value"})
-	c.writeContentType(c.Type)
+	c.writeContentType(c.ct)
 	c.ResponseWriter.WriteHeader(c.status)
 	c.respond(c.responser)
 
@@ -160,7 +160,7 @@ func TestRespondString(t *testing.T) {
 	w := httptest.NewRecorder()
 	c.ResponseWriter = w
 	c.String("string")
-	c.writeContentType(c.Type)
+	c.writeContentType(c.ct)
 	c.ResponseWriter.WriteHeader(c.status)
 	c.respond(c.responser)
 
@@ -174,7 +174,7 @@ func TestRespondHTML(t *testing.T) {
 	w := httptest.NewRecorder()
 	c.ResponseWriter = w
 	c.HTML("<html>html</html>")
-	c.writeContentType(c.Type)
+	c.writeContentType(c.ct)
 	c.ResponseWriter.WriteHeader(c.status)
 	c.respond(c.responser)
 
@@ -189,7 +189,7 @@ func TestRespondWithCustomStatus(t *testing.T) {
 	c.ResponseWriter = w
 	c.Status(http.StatusNotFound)
 	c.String("Not Found")
-	c.writeContentType(c.Type)
+	c.writeContentType(c.ct)
 	c.ResponseWriter.WriteHeader(c.status)
 	c.respond(c.responser)
 
