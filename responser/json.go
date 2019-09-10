@@ -12,5 +12,5 @@ type JSON struct {
 
 // Respond json-data.
 func (r JSON) Respond(w http.ResponseWriter) error {
-	return json.NewEncoder(w).Encode(&r.Data)
+	return json.NewEncoder(w).Encode(r.Data)
 }

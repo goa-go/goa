@@ -54,7 +54,7 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.URL = r.URL
 	c.Path = r.URL.Path
 	c.Header = r.Header
-	c.status = 404
+	c.status = http.StatusNotFound
 	c.explicitStatus = false
 
 	c.Params = nil
@@ -214,7 +214,7 @@ func (c *Context) respond(r responser.Responser) error {
 // JSON responds json-data.
 func (c *Context) JSON(json interface{}) {
 	if !c.explicitStatus {
-		c.Status(200)
+		c.Status(http.StatusOK)
 	}
 
 	c.Type = "application/json; charset=utf-8"
@@ -224,7 +224,7 @@ func (c *Context) JSON(json interface{}) {
 // XML responds xml-data.
 func (c *Context) XML(xml interface{}) {
 	if !c.explicitStatus {
-		c.Status(200)
+		c.Status(http.StatusOK)
 	}
 
 	c.Type = "application/xml; charset=utf-8"
@@ -234,7 +234,7 @@ func (c *Context) XML(xml interface{}) {
 // String responds string-data.
 func (c *Context) String(str string) {
 	if !c.explicitStatus {
-		c.Status(200)
+		c.Status(http.StatusOK)
 	}
 
 	c.Type = "text/plain; charset=utf-8"
@@ -244,7 +244,7 @@ func (c *Context) String(str string) {
 // HTML responds html.
 func (c *Context) HTML(str string) {
 	if !c.explicitStatus {
-		c.Status(200)
+		c.Status(http.StatusOK)
 	}
 
 	c.Type = "text/html; charset=utf-8"
@@ -253,6 +253,9 @@ func (c *Context) HTML(str string) {
 
 // Redirect replies to the request with a redirect to url and a status code.
 func (c *Context) Redirect(code int, url string) {
+	if code < http.StatusMultipleChoices || code > http.StatusPermanentRedirect {
+		panic(fmt.Errorf("cannot redirect with status code %d", code))
+	}
 	c.redirected = true
 	c.Status(code)
 	http.Redirect(c.ResponseWriter, c.Request, url, code)

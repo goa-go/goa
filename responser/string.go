@@ -13,6 +13,6 @@ type String struct {
 
 // Respond string-data.(text/html)
 func (r String) Respond(w http.ResponseWriter) error {
-	_, err := w.Write(utils.Str2bytes(r.Data))
+	_, err := w.Write(utils.Str2Bytes(r.Data))
 	return err
 }

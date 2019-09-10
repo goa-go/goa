@@ -13,5 +13,5 @@ type String struct{}
 // Parse string-data.
 func (p String) Parse(req *http.Request) (string, error) {
 	b, err := ioutil.ReadAll(req.Body)
-	return utils.Bytes2str(b), err
+	return utils.Bytes2Str(b), err
 }
