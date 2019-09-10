@@ -1,21 +1,29 @@
+0.3.1 / 2019-09-10
+==================
+**other**
+  - remove router to goa-go/router
+
+**test**
+  - optimization test
+
 0.3.0 / 2019-09-03
 ==================
-**feat**
+**features**
   - optimization error handling
 
-**remove**
+**other**
   - remove c.Body
 
 0.2.1 / 2019-08-25
 ==================
-**feat**
+**features**
   - add c.ParseQuery
   - add c.ParseForm
 
 0.2.0 / 2019-08-18
 ==================
 
-**feat**
+**features**
   - add context.Body `c.Body = ...`
   - add error handling
   - add support of html
@@ -24,14 +32,14 @@
 0.1.1 / 2019-08-09
 ==================
 
-**feat**
+**features**
   - add context.Query
   - add context.PostForm
 
 0.1.0 / 2019-08-07
 ==================
 
-**feat**
+**features**
   - add goa-context, build goa-router based on httprouter
 
 0.0.0 / 2019-07-30

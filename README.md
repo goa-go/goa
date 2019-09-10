@@ -28,7 +28,6 @@ func main() {
 
   app.Use(func(c *goa.Context, next func()) {
     c.String("Hello Goa!")
-    next()
   })
   log.Fatal(app.Listen(":3000"))
 }
@@ -43,10 +42,11 @@ package main
 
 import (
   "fmt"
+  "log"
   "time"
 
   "github.com/goa-go/goa"
-  "github.com/goa-go/goa/router"
+  "github.com/goa-go/router"
 )
 
 func logger(c *goa.Context, next func()) {
