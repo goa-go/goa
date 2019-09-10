@@ -7,6 +7,9 @@ matrix:
   - go: 1.11.x
   - go: 1.12.x
 
+before_install:
+  - go get -u github.com/stretchr/testify
+
 install:
   - make install
 
