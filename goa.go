@@ -36,7 +36,7 @@ func New() *Goa {
 	return app
 }
 
-// ServeHTTP makes the router implement the http.Handler interface.
+// ServeHTTP makes the app implement the http.Handler interface.
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := app.pool.Get().(*Context)
 	c.init(w, r)
