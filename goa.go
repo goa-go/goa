@@ -97,8 +97,8 @@ func (app *Goa) handleRequest(c *Context) {
 func (app *Goa) handleResponse(c *Context) {
 
 	// Content-Type
-	if c.Type != "" {
-		c.writeContentType(c.Type)
+	if c.ct != "" {
+		c.writeContentType(c.ct)
 	}
 
 	// Status code
@@ -132,8 +132,8 @@ func (app *Goa) onerror(c *Context, err interface{}) {
 		log.Print("[ERROR] ", err)
 	}
 
-	c.Type = "text/plain; charset=utf-8"
-	c.writeContentType(c.Type)
+	c.ct = "text/plain; charset=utf-8"
+	c.writeContentType(c.ct)
 	c.SetHeader("X-Content-Type-Options", "nosniff")
 
 	c.ResponseWriter.WriteHeader(code)

@@ -38,7 +38,7 @@ type Context struct {
 	explicitStatus bool
 
 	// Content-Type
-	Type string
+	ct string
 
 	// whether handled response by c.ResponseWriter
 	Handled    bool
@@ -60,7 +60,7 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.Params = nil
 	c.Keys = nil
 	c.queryMap = nil
-	c.Type = ""
+	c.ct = ""
 	c.Handled = false
 	c.redirected = false
 	c.responser = nil
@@ -217,7 +217,7 @@ func (c *Context) JSON(json interface{}) {
 		c.Status(http.StatusOK)
 	}
 
-	c.Type = "application/json; charset=utf-8"
+	c.ct = "application/json; charset=utf-8"
 	c.responser = responser.JSON{Data: json}
 }
 
@@ -227,7 +227,7 @@ func (c *Context) XML(xml interface{}) {
 		c.Status(http.StatusOK)
 	}
 
-	c.Type = "application/xml; charset=utf-8"
+	c.ct = "application/xml; charset=utf-8"
 	c.responser = responser.XML{Data: xml}
 }
 
@@ -237,7 +237,7 @@ func (c *Context) String(str string) {
 		c.Status(http.StatusOK)
 	}
 
-	c.Type = "text/plain; charset=utf-8"
+	c.ct = "text/plain; charset=utf-8"
 	c.responser = responser.String{Data: str}
 }
 
@@ -247,7 +247,7 @@ func (c *Context) HTML(str string) {
 		c.Status(http.StatusOK)
 	}
 
-	c.Type = "text/html; charset=utf-8"
+	c.ct = "text/html; charset=utf-8"
 	c.responser = responser.String{Data: str}
 }
 
