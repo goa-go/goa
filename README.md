@@ -58,7 +58,7 @@ func logger(c *goa.Context) {
     c.Method,
     c.URL,
   )
-  next()
+  c.Next()
   fmt.Printf(
     "[%s] --> %s %s %d %s\n",
     time.Now().Format("2006-01-02 15:04:05"),
@@ -71,9 +71,9 @@ func logger(c *goa.Context) {
 
 func main() {
   app := goa.New()
-  router := router.New()
+  r := router.New()
 
-  router.GET("/", func(c *goa.Context) {
+  r.GET("/", func(c *goa.Context) {
     c.String("Hello Goa!")
   })
 
