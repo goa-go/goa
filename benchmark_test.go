@@ -8,35 +8,31 @@ import (
 
 func BenchmarkGoa(b *testing.B) {
 	app := New()
-	app.Use(func(c *Context, next func()) {
-	})
 
-	app.ComposeMiddlewares()
 	run(b, app)
 }
 
 func BenchmarkGoaMiddleware(b *testing.B) {
 	app := New()
-	app.Use(func(c *Context, next func()) {
-		next()
+	app.Use(func(c *Context) {
+		c.Next()
 	})
-	app.Use(func(c *Context, next func()) {
-		next()
+	app.Use(func(c *Context) {
+		c.Next()
 	})
-	app.Use(func(c *Context, next func()) {
+	app.Use(func(c *Context) {
+		c.Next()
 	})
 
-	app.ComposeMiddlewares()
 	run(b, app)
 }
 
 func BenchmarkGoaString(b *testing.B) {
 	app := New()
-	app.Use(func(c *Context, next func()) {
+	app.Use(func(c *Context) {
 		c.String("string")
 	})
 
-	app.ComposeMiddlewares()
 	run(b, app)
 }
 
@@ -46,11 +42,10 @@ func BenchmarkGoaJSON(b *testing.B) {
 	}
 
 	app := New()
-	app.Use(func(c *Context, next func()) {
+	app.Use(func(c *Context) {
 		c.JSON(obj{"value"})
 	})
 
-	app.ComposeMiddlewares()
 	run(b, app)
 }
 

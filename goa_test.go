@@ -15,13 +15,11 @@ func testServer(m Middleware) *httptest.Server {
 
 	app.Use(m)
 
-	// Before testing, must compose middlewares.
-	app.ComposeMiddlewares()
 	return httptest.NewServer(app)
 }
 
 func TestSimpleRequest(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		c.String("Hello Goa!")
 	})
 	defer ts.Close()
@@ -37,7 +35,7 @@ func TestSimpleRequest(t *testing.T) {
 }
 
 func TestShouldNotHandleRespond(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		c.Handled = true
 		c.Status(500)
 		c.String("error")
@@ -55,7 +53,7 @@ func TestShouldNotHandleRespond(t *testing.T) {
 }
 
 func TestShouldNotHandleRespondWithRedirect(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		if c.Path != "/path" {
 			c.Redirect(301, "/path")
 			c.Status(500)
@@ -77,7 +75,7 @@ func TestShouldNotHandleRespondWithRedirect(t *testing.T) {
 
 /* test *goa.onerror */
 func TestGoaError(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		c.Error(404, http.StatusText(404))
 	})
 	defer ts.Close()
@@ -93,7 +91,7 @@ func TestGoaError(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		panic(errors.New("error"))
 	})
 	defer ts.Close()
@@ -109,7 +107,7 @@ func TestError(t *testing.T) {
 }
 
 func TestStringError(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		panic("error")
 	})
 	defer ts.Close()
@@ -125,7 +123,7 @@ func TestStringError(t *testing.T) {
 }
 
 func TestIntError(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		panic(1)
 	})
 	defer ts.Close()
@@ -141,7 +139,7 @@ func TestIntError(t *testing.T) {
 }
 
 func TestRespondError(t *testing.T) {
-	ts := testServer(func(c *Context, next func()) {
+	ts := testServer(func(c *Context) {
 		c.XML([]byte{1, 2, 3})
 	})
 	defer ts.Close()

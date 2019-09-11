@@ -26,7 +26,7 @@ $ go get -u github.com/goa-go/goa
 func main() {
   app := goa.New()
 
-  app.Use(func(c *goa.Context, next func()) {
+  app.Use(func(c *goa.Context) {
     c.String("Hello Goa!")
   })
   log.Fatal(app.Listen(":3000"))
@@ -49,7 +49,7 @@ import (
   "github.com/goa-go/router"
 )
 
-func logger(c *goa.Context, next func()) {
+func logger(c *goa.Context) {
   start := time.Now()
 
   fmt.Printf(

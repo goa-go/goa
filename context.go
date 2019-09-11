@@ -44,6 +44,10 @@ type Context struct {
 	Handled    bool
 	redirected bool
 
+	index int8
+	len   int8
+	app   *Goa
+
 	responser responser.Responser
 }
 
@@ -64,6 +68,23 @@ func (c *Context) init(w http.ResponseWriter, r *http.Request) {
 	c.Handled = false
 	c.redirected = false
 	c.responser = nil
+	c.index = 0
+	c.len = int8(len(c.app.middlewares))
+}
+
+// Next implements the next middleware.
+// For example,
+// app.Use(func(c *goa.Context) {
+//   //do sth
+//   c.Next()
+//   //do sth
+// })
+func (c *Context) Next() {
+	if c.index >= c.len-1 {
+		return
+	}
+	c.index++
+	c.app.middlewares[c.index](c)
 }
 
 // Set value.
@@ -242,13 +263,13 @@ func (c *Context) String(str string) {
 }
 
 // HTML responds html.
-func (c *Context) HTML(str string) {
+func (c *Context) HTML(html string) {
 	if !c.explicitStatus {
 		c.Status(http.StatusOK)
 	}
 
 	c.ct = "text/html; charset=utf-8"
-	c.responser = responser.String{Data: str}
+	c.responser = responser.String{Data: html}
 }
 
 // Redirect replies to the request with a redirect to url and a status code.

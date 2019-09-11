@@ -12,38 +12,37 @@ import (
 // Middleware is based part of goa,
 // any processing will take place here.
 // should be used liked app.Use(middleware).
-type Middleware func(*Context, func())
+type Middleware func(*Context)
 
 // Middlewares is []Middleware.
 type Middlewares []Middleware
 
-type middlewareHandler func(*Context)
-
 // Goa is the framework's instance.
 type Goa struct {
 	middlewares Middlewares
-
-	pool              sync.Pool
-	middlewareHandler middlewareHandler
+	pool        sync.Pool
 }
 
 // New returns the initialized Goa instance.
 func New() *Goa {
 	app := &Goa{}
 	app.pool.New = func() interface{} {
-		return &Context{}
+		return &Context{app: app}
 	}
 	return app
 }
 
 // ServeHTTP makes the app implement the http.Handler interface.
 func (app *Goa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	c := app.pool.Get().(*Context)
-	c.init(w, r)
+	if len(app.middlewares) > 0 {
+		c := app.pool.Get().(*Context)
+		// c.middlewares = app.middlewares
+		c.init(w, r)
 
-	app.handleRequest(c)
+		app.handleRequest(c)
 
-	app.pool.Put(c)
+		app.pool.Put(c)
+	}
 }
 
 // Use a middleware.
@@ -51,34 +50,9 @@ func (app *Goa) Use(m Middleware) {
 	app.middlewares = append(app.middlewares, m)
 }
 
-// ComposeMiddlewares composes middleware,
-// it doesn't need to be called manually except in testing,
-// but httptest is only available after ComposeMiddlewares is called.
-func (app *Goa) ComposeMiddlewares() {
-	app.middlewareHandler = compose(app.middlewares)
-}
-
 // Listen starts server with the addr.
 func (app *Goa) Listen(addr string) error {
-	app.ComposeMiddlewares()
 	return http.ListenAndServe(addr, app)
-}
-
-var dispatch func(i int)
-
-func compose(m Middlewares) middlewareHandler {
-	return func(c *Context) {
-		dispatch = func(i int) {
-			if i == len(m) {
-				return
-			}
-			fn := m[i]
-			fn(c, func() {
-				dispatch(i + 1)
-			})
-		}
-		dispatch(0)
-	}
 }
 
 func (app *Goa) handleRequest(c *Context) {
@@ -88,7 +62,8 @@ func (app *Goa) handleRequest(c *Context) {
 		}
 	}()
 
-	app.middlewareHandler(c)
+	app.middlewares[0](c)
+
 	if !c.redirected && !c.Handled {
 		app.handleResponse(c)
 	}
