@@ -27,7 +27,7 @@ func testMiddlewareServer() *httptest.Server {
 
 	app.Use(func(c *Context) {
 		calls = append(calls, 3)
-		// c.Next()
+		c.Next()
 		calls = append(calls, 4)
 	})
 
