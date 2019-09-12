@@ -158,19 +158,18 @@ func (ps Params) Get(name string) string {
 	return ""
 }
 
-// Parse handles parser.
-func (c *Context) Parse(p parser.Parser) error {
+func (c *Context) parse(p parser.Parser) error {
 	return p.Parse(c.Request)
 }
 
 // ParseJSON parses json-data, require a pointer.
 func (c *Context) ParseJSON(pointer interface{}) error {
-	return c.Parse(parser.JSON{Pointer: pointer})
+	return c.parse(parser.JSON{Pointer: pointer})
 }
 
 // ParseXML parses xml-data, require a pointer.
 func (c *Context) ParseXML(pointer interface{}) error {
-	return c.Parse(parser.XML{Pointer: pointer})
+	return c.parse(parser.XML{Pointer: pointer})
 }
 
 // ParseString returns string-data
@@ -189,7 +188,7 @@ func (c *Context) ParseString() (string, error) {
 // p := &Person{}
 // c.ParseQuery(p)
 func (c *Context) ParseQuery(pointer interface{}) error {
-	return c.Parse(parser.Query{Pointer: pointer})
+	return c.parse(parser.Query{Pointer: pointer})
 }
 
 // ParseForm can parse form-data and x-www-form-urlencoded,
@@ -205,7 +204,7 @@ func (c *Context) ParseQuery(pointer interface{}) error {
 // p := &Person{}
 // c.ParseForm(p)
 func (c *Context) ParseForm(pointer interface{}) error {
-	return c.Parse(parser.Form{Pointer: pointer})
+	return c.parse(parser.Form{Pointer: pointer})
 }
 
 /* handle response */
