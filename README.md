@@ -4,7 +4,8 @@
 [![Codecov](https://codecov.io/gh/goa-go/goa/branch/master/graph/badge.svg)](https://codecov.io/github/goa-go/goa?branch=master)
 [![Go Doc](https://godoc.org/github.com/goa-go/goa?status.svg)](http://godoc.org/github.com/goa-go/goa)
 [![Go Report](https://goreportcard.com/badge/github.com/goa-go/goa)](https://goreportcard.com/report/github.com/goa-go/goa)
-[![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/goa-go/goa/pull/new)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
+[![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/goa-go/goa/pull/new) 
 
 Goa is under construction, if you are familiar with [koa](https://github.com/koajs/koa) or go and interested in this project, please join us.
 
