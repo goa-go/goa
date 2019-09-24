@@ -79,7 +79,7 @@ func main() {
   })
 
   app.Use(logger)
-  app.Use(router.Routes())
+  app.Use(r.Routes())
   log.Fatal(app.Listen(":3000"))
 }
 ```
