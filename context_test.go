@@ -108,6 +108,34 @@ func TestParseForm(t *testing.T) {
 	assert.Equal(t, "value", ptr.Key)
 }
 
+func TestGetCookie(t *testing.T) {
+	c := &Context{}
+	c.ResponseWriter = httptest.NewRecorder()
+	c.Request, _ = http.NewRequest("GET", "/getCookie", nil)
+	c.Request.Header.Set("Cookie", "user=goa")
+	cookie, _ := c.Cookie("user")
+	assert.Equal(t, "goa", cookie)
+
+	_, err := c.Cookie("nokey")
+	assert.Error(t, err)
+}
+
+func TestSetCookie(t *testing.T) {
+	c := &Context{}
+	c.ResponseWriter = httptest.NewRecorder()
+	c.SetCookie(&http.Cookie{
+		Name:     "user",
+		Value:    "goa",
+		MaxAge:   1,
+		Path:     "/",
+		Domain:   "localhost",
+		Secure:   true,
+		HttpOnly: true,
+	})
+	assert.Equal(t, "user=goa; Path=/; Domain=localhost; Max-Age=1; HttpOnly; Secure", c.ResponseWriter.Header().Get("Set-Cookie"))
+}
+
+
 func TestStatus(t *testing.T) {
 	c := &Context{}
 	c.Status(200)

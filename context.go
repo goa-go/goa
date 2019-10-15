@@ -207,6 +207,17 @@ func (c *Context) ParseForm(pointer interface{}) error {
 	return c.parse(parser.Form{Pointer: pointer})
 }
 
+// Cookie returns the named cookie provided in the request 
+// or ErrNoCookie if not found.
+func (c *Context) Cookie(name string) (string, error) {
+	cookie, err := c.Request.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+	val, _ := url.QueryUnescape(cookie.Value)
+	return val, nil
+}
+
 /* handle response */
 
 // Status sets the HTTP response code.
@@ -292,6 +303,11 @@ func (c *Context) writeContentType(value string) {
 	if val := header["Content-Type"]; len(val) == 0 {
 		header["Content-Type"] = []string{value}
 	}
+}
+
+// SetCookie adds a Set-Cookie header to the ResponseWriter's headers.
+func (c *Context) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(c.ResponseWriter, cookie)
 }
 
 // Error is used like c.Error(goa.Error{...}).
