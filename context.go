@@ -2,6 +2,7 @@ package goa
 
 import (
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -141,6 +142,11 @@ func (c *Context) PostForm(key string) string {
 	return c.Request.PostFormValue(key)
 }
 
+// FormFile returns the first file for the provided form key.
+func (c *Context) FormFile(name string) (multipart.File, *multipart.FileHeader, error) {
+	return c.Request.FormFile(name)
+}
+
 // Param returns the value of the URL param or "".
 // When using goa-router, it works.
 func (c *Context) Param(key string) string {
@@ -207,7 +213,7 @@ func (c *Context) ParseForm(pointer interface{}) error {
 	return c.parse(parser.Form{Pointer: pointer})
 }
 
-// Cookie returns the named cookie provided in the request 
+// Cookie returns the named cookie provided in the request
 // or ErrNoCookie if not found.
 func (c *Context) Cookie(name string) (string, error) {
 	cookie, err := c.Request.Cookie(name)

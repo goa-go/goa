@@ -1,6 +1,8 @@
 package goa
 
 import (
+	"bytes"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -37,6 +39,42 @@ func TestPostForm(t *testing.T) {
 	value := c.PostForm("key")
 
 	assert.Equal(t, "value", value)
+}
+
+func TestFormFile(t *testing.T) {
+	c := &Context{}
+	buf := new(bytes.Buffer)
+	mw := multipart.NewWriter(buf)
+	w, err := mw.CreateFormFile("file", "test")
+	if assert.NoError(t, err) {
+		_, err = w.Write([]byte("test"))
+		assert.NoError(t, err)
+	}
+	mw.Close()
+
+	c.Request, _ = http.NewRequest("POST", "/", buf)
+	c.Request.Header.Set("Content-Type", mw.FormDataContentType())
+
+	file, fh, err := c.FormFile("file")
+
+	if assert.NoError(t, err) && assert.NotNil(t, file) {
+		assert.Equal(t, "test", fh.Filename)
+	}
+}
+
+func TestFormFileFailed(t *testing.T) {
+	c := &Context{}
+	buf := new(bytes.Buffer)
+	mw := multipart.NewWriter(buf)
+	mw.Close()
+
+	c.Request, _ = http.NewRequest("POST", "/", nil)
+	c.Request.Header.Set("Content-Type", mw.FormDataContentType())
+
+	file, fh, err := c.FormFile("file")
+	assert.Error(t, err)
+	assert.Nil(t, file)
+	assert.Nil(t, fh)
 }
 
 func TestParam(t *testing.T) {
@@ -134,7 +172,6 @@ func TestSetCookie(t *testing.T) {
 	})
 	assert.Equal(t, "user=goa; Path=/; Domain=localhost; Max-Age=1; HttpOnly; Secure", c.ResponseWriter.Header().Get("Set-Cookie"))
 }
-
 
 func TestStatus(t *testing.T) {
 	c := &Context{}
